@@ -109,7 +109,7 @@ class MerkeziWidget(QWidget):
             
     def filtreUI(self):
         self.secim = QComboBox()
-        self.secim.addItems(["Sobel","Hessian","Canny","Prewitt","Laplace","Sato"])
+        self.secim.addItems(["Sobel","Hessian","Canny","Prewitt","Laplace","Sato","Unsharp mask","Threshold Niblack","Meijering","Threshold Sauvola"])
         
         uygulaButon = QPushButton("Uygula")
         uygulaButon.resize(80,30)
@@ -119,7 +119,8 @@ class MerkeziWidget(QWidget):
         form.addRow("Filtre Seçimi: ",self.secim)
         form.addRow(uygulaButon)
         self.filtreTab.setLayout(form)
-    
+        
+        
     def filtreUygula(self):
         resim = io.imread(self.acikResim)
         
@@ -203,6 +204,62 @@ class MerkeziWidget(QWidget):
             
         elif index == 5:
             filtrelenmis = filters.sato(gri)
+            self.islenmis = filtrelenmis
+            
+            donusturulmus = gray2rgb(img_as_ubyte(filtrelenmis))   
+            
+            height, width, channel = donusturulmus.shape
+            bytesPerLine = 3 * width
+            qImg = QImage(donusturulmus.data, width, height, bytesPerLine, QImage.Format_RGB888)
+            
+            pixmap = QPixmap(qImg)
+            pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
+            self.etiket.setPixmap(pix)
+            
+        elif index==6:
+            filtrelenmis = filters.unsharp_mask(resim,radius= 2, amount=2)
+            self.islenmis = filtrelenmis
+            
+            donusturulmus = gray2rgb(img_as_ubyte(filtrelenmis))   
+            
+            height, width, channel = donusturulmus.shape
+            bytesPerLine = 3 * width
+            qImg = QImage(donusturulmus.data, width, height, bytesPerLine, QImage.Format_RGB888)
+            
+            pixmap = QPixmap(qImg)
+            pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
+            self.etiket.setPixmap(pix)
+            
+        elif index==7:
+            filtrelenmis = filters.threshold_niblack(gri)
+            self.islenmis = filtrelenmis
+            
+            donusturulmus = gray2rgb(img_as_ubyte(filtrelenmis))   
+            
+            height, width, channel = donusturulmus.shape
+            bytesPerLine = 3 * width
+            qImg = QImage(donusturulmus.data, width, height, bytesPerLine, QImage.Format_RGB888)
+            
+            pixmap = QPixmap(qImg)
+            pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
+            self.etiket.setPixmap(pix)
+            
+        elif index==8:
+            filtrelenmis = filters.meijering(gri)
+            self.islenmis = filtrelenmis
+            
+            donusturulmus = gray2rgb(img_as_ubyte(filtrelenmis))   
+            
+            height, width, channel = donusturulmus.shape
+            bytesPerLine = 3 * width
+            qImg = QImage(donusturulmus.data, width, height, bytesPerLine, QImage.Format_RGB888)
+            
+            pixmap = QPixmap(qImg)
+            pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
+            self.etiket.setPixmap(pix)
+            
+        elif index==9:
+            filtrelenmis = filters.threshold_sauvola(gri)
             self.islenmis = filtrelenmis
             
             donusturulmus = gray2rgb(img_as_ubyte(filtrelenmis))   
