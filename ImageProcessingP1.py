@@ -120,7 +120,20 @@ class MerkeziWidget(QWidget):
         form.addRow(uygulaButon)
         self.filtreTab.setLayout(form)
         
+    def ekrandaGoster(self,gosterilecekResim):
+        #filtreleme float64 tipinde 2d array çıktı veriyor ekrana basmak için bize uint8 tipinde 3d array(rgb) gerekli
+        donusturulmus = gray2rgb(img_as_ubyte(gosterilecekResim))
+            
+        #np arrayin QImage dönüştürülmesi
+        height, width, channel = donusturulmus.shape
+        bytesPerLine = 3 * width
+        qImg = QImage(donusturulmus.data, width, height, bytesPerLine, QImage.Format_RGB888)
         
+        pixmap = QPixmap(qImg)
+        pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
+        self.etiket.setPixmap(pix)
+        
+    
     def filtreUygula(self):
         resim = io.imread(self.acikResim)
         
@@ -129,148 +142,54 @@ class MerkeziWidget(QWidget):
         
         index = self.secim.currentIndex()
         if index == 0:
-            
             filtrelenmis = filters.sobel(gri)
-            
             self.islenmis = filtrelenmis
-            
-            #filtreleme float64 tipinde 2d array çıktı veriyor ekrana basmak için bize uint8 tipinde 3d array(rgb) gerekli
-            donusturulmus = gray2rgb(img_as_ubyte(filtrelenmis))
-            
-            #np arrayin QImage dönüştürülmesi
-            height, width, channel = donusturulmus.shape
-            bytesPerLine = 3 * width
-            qImg = QImage(donusturulmus.data, width, height, bytesPerLine, QImage.Format_RGB888)
-            
-            pixmap = QPixmap(qImg)
-            pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
-            self.etiket.setPixmap(pix)
+            self.ekrandaGoster(filtrelenmis)
             
         elif index == 1:
             filtrelenmis = filters.hessian(gri)
             self.islenmis = filtrelenmis
-            
-            donusturulmus = gray2rgb(img_as_ubyte(filtrelenmis))   
-            
-            height, width, channel = donusturulmus.shape
-            bytesPerLine = 3 * width
-            qImg = QImage(donusturulmus.data, width, height, bytesPerLine, QImage.Format_RGB888)
-            
-            pixmap = QPixmap(qImg)
-            pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
-            self.etiket.setPixmap(pix)
+            self.ekrandaGoster(filtrelenmis)
             
         elif index == 2:
             filtrelenmis = feature.canny(gri)
             self.islenmis = filtrelenmis
-            
-            donusturulmus = gray2rgb(img_as_ubyte(filtrelenmis))   
-            
-            height, width, channel = donusturulmus.shape
-            bytesPerLine = 3 * width
-            qImg = QImage(donusturulmus.data, width, height, bytesPerLine, QImage.Format_RGB888)
-            
-            pixmap = QPixmap(qImg)
-            pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
-            self.etiket.setPixmap(pix)
+            self.ekrandaGoster(filtrelenmis)
             
         elif index == 3:
             filtrelenmis = filters.prewitt(gri)
             self.islenmis = filtrelenmis
-            
-            donusturulmus = gray2rgb(img_as_ubyte(filtrelenmis))   
-            
-            height, width, channel = donusturulmus.shape
-            bytesPerLine = 3 * width
-            qImg = QImage(donusturulmus.data, width, height, bytesPerLine, QImage.Format_RGB888)
-            
-            pixmap = QPixmap(qImg)
-            pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
-            self.etiket.setPixmap(pix)
+            self.ekrandaGoster(filtrelenmis)
             
         elif index == 4:
             filtrelenmis = filters.laplace(resim)
             self.islenmis = filtrelenmis
-            
-            filtrelenmis = img_as_ubyte(filtrelenmis)
-            
-            height, width, channel = filtrelenmis.shape
-            bytesPerLine = 3 * width
-            qImg = QImage(filtrelenmis.data, width, height, bytesPerLine, QImage.Format_RGB888)
-            
-            pixmap = QPixmap(qImg)
-            pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
-            self.etiket.setPixmap(pix)
+            self.ekrandaGoster(filtrelenmis)
             
         elif index == 5:
             filtrelenmis = filters.sato(gri)
             self.islenmis = filtrelenmis
-            
-            donusturulmus = gray2rgb(img_as_ubyte(filtrelenmis))   
-            
-            height, width, channel = donusturulmus.shape
-            bytesPerLine = 3 * width
-            qImg = QImage(donusturulmus.data, width, height, bytesPerLine, QImage.Format_RGB888)
-            
-            pixmap = QPixmap(qImg)
-            pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
-            self.etiket.setPixmap(pix)
+            self.ekrandaGoster(filtrelenmis)
             
         elif index==6:
             filtrelenmis = filters.unsharp_mask(resim,radius= 2, amount=2)
             self.islenmis = filtrelenmis
-            
-            donusturulmus = gray2rgb(img_as_ubyte(filtrelenmis))   
-            
-            height, width, channel = donusturulmus.shape
-            bytesPerLine = 3 * width
-            qImg = QImage(donusturulmus.data, width, height, bytesPerLine, QImage.Format_RGB888)
-            
-            pixmap = QPixmap(qImg)
-            pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
-            self.etiket.setPixmap(pix)
+            self.ekrandaGoster(filtrelenmis)
             
         elif index==7:
             filtrelenmis = filters.threshold_niblack(gri)
             self.islenmis = filtrelenmis
-            
-            donusturulmus = gray2rgb(img_as_ubyte(filtrelenmis))   
-            
-            height, width, channel = donusturulmus.shape
-            bytesPerLine = 3 * width
-            qImg = QImage(donusturulmus.data, width, height, bytesPerLine, QImage.Format_RGB888)
-            
-            pixmap = QPixmap(qImg)
-            pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
-            self.etiket.setPixmap(pix)
+            self.ekrandaGoster(filtrelenmis)
             
         elif index==8:
             filtrelenmis = filters.meijering(gri)
             self.islenmis = filtrelenmis
-            
-            donusturulmus = gray2rgb(img_as_ubyte(filtrelenmis))   
-            
-            height, width, channel = donusturulmus.shape
-            bytesPerLine = 3 * width
-            qImg = QImage(donusturulmus.data, width, height, bytesPerLine, QImage.Format_RGB888)
-            
-            pixmap = QPixmap(qImg)
-            pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
-            self.etiket.setPixmap(pix)
+            self.ekrandaGoster(filtrelenmis)
             
         elif index==9:
             filtrelenmis = filters.threshold_sauvola(gri)
             self.islenmis = filtrelenmis
-            
-            donusturulmus = gray2rgb(img_as_ubyte(filtrelenmis))   
-            
-            height, width, channel = donusturulmus.shape
-            bytesPerLine = 3 * width
-            qImg = QImage(donusturulmus.data, width, height, bytesPerLine, QImage.Format_RGB888)
-            
-            pixmap = QPixmap(qImg)
-            pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
-            self.etiket.setPixmap(pix)
+            self.ekrandaGoster(filtrelenmis)
 
 
     
