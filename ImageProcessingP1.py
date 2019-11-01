@@ -9,11 +9,13 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-from skimage import data, io, filters, img_as_ubyte, feature
+from skimage import data, io, filters, img_as_ubyte, feature, exposure
 from skimage.color import rgb2gray, gray2rgb
 from scipy.misc import imsave
 
 import numpy as np
+
+import matplotlib.pyplot as plt
 
 from datetime import datetime
 
@@ -56,6 +58,7 @@ class MerkeziWidget(QWidget):
         self.islenmis = None
                 
         self.setUI()
+        
 
         
     def setUI(self):
@@ -77,6 +80,7 @@ class MerkeziWidget(QWidget):
         
         
         self.filtreUI()
+        self.histogramUI()
     
         
     def deneme(self):
@@ -100,6 +104,7 @@ class MerkeziWidget(QWidget):
             
             self.acikResim = dosyaYolu[0]
         print(dosyaYolu)
+        
             
     def dosyaKaydet(self):
         dosyaYolu = QFileDialog.getSaveFileName(self,"Kayıt Yeri Seç",str(datetime.timestamp(datetime.now())), "*.jpg *.png")
@@ -119,6 +124,23 @@ class MerkeziWidget(QWidget):
         form.addRow("Filtre Seçimi: ",self.secim)
         form.addRow(uygulaButon)
         self.filtreTab.setLayout(form)
+        
+    def histogramUI(self):
+        self.histogramEtiket = QLabel()
+        self.histogramEtiket.resize(200,200)
+        pixmap = QPixmap()
+        pix = pixmap.scaled(200, 200, Qt.KeepAspectRatio)
+        self.histogramEtiket.setPixmap(pix)
+        
+        histogramButon = QPushButton("Histogram Görüntüle")
+        histogramButon.resize(80,30)
+        histogramButon.clicked.connect(self.histogramGoruntule)
+        
+        form = QFormLayout()
+        form.addRow(histogramButon)
+        form.addRow(self.histogramEtiket)
+        self.histogramTab.setLayout(form)
+        
         
     def ekrandaGoster(self,gosterilecekResim):
         #filtreleme float64 tipinde 2d array çıktı veriyor ekrana basmak için bize uint8 tipinde 3d array(rgb) gerekli
@@ -190,6 +212,32 @@ class MerkeziWidget(QWidget):
             filtrelenmis = filters.threshold_sauvola(gri)
             self.islenmis = filtrelenmis
             self.ekrandaGoster(filtrelenmis)
+            
+    
+        
+    def histogramGoruntule(self):
+        #resmin np arraya dönüştürülmesi
+        resim = io.imread(self.acikResim)
+        
+        #histogramın oluşturulması
+        hist, hist_centers = exposure.histogram(resim)
+        fig, ax = plt.subplots()
+        ax.plot(hist_centers,hist,lw=2)
+        ax.set_title('Histogram')
+        fig.canvas.draw()
+        
+        #oluşturulan histogramın resime dönüştürülmesi(np array olarak)
+        ncols, nrows = fig.canvas.get_width_height()
+        X = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8).reshape(nrows, ncols, 3)
+        
+        #histogram resminin histogram tabında gösterilmesi
+        height, width, channel = X.shape
+        bytesPerLine = 3 * width
+        qImg = QImage(X.data, width, height, bytesPerLine, QImage.Format_RGB888)
+        
+        pixmap = QPixmap(qImg)
+        pix = pixmap.scaled(380, 380, Qt.KeepAspectRatio)
+        self.histogramEtiket.setPixmap(pix)
 
 
     
