@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-from skimage import data, io, filters, img_as_ubyte, feature, exposure
+from skimage import data, io, filters, img_as_ubyte, feature, exposure, transform
 from skimage.color import rgb2gray, gray2rgb
 from scipy.misc import imsave
 
@@ -71,16 +71,20 @@ class MerkeziWidget(QWidget):
         islemAlani = QTabWidget(self)
         islemAlani.move(401,0)
         islemAlani.resize(400,600)
+        
         self.filtreTab = QWidget()
         self.histogramTab = QWidget()
+        self.donusumTab = QWidget()
         
         islemAlani.addTab(self.filtreTab, "Filtre")
         islemAlani.addTab(self.histogramTab, "Histogram")
+        islemAlani.addTab(self.donusumTab,"Dönüşüm")
         islemAlani.setTabPosition(QTabWidget.East)
         
         
         self.filtreUI()
         self.histogramUI()
+        self.donusumUI()
     
         
     def deneme(self):
@@ -146,6 +150,32 @@ class MerkeziWidget(QWidget):
         form.addRow(esitleButon)
         self.histogramTab.setLayout(form)
         
+    def donusumUI(self):
+        self.islemComboBox = QComboBox()
+        self.islemComboBox.addItems(["Yeniden Boyutlandırma", "Döndürme", "Kırpma"])
+        self.islemComboBox.currentIndexChanged.connect(self.islemSecimiUygula)
+        
+        self.donusumStackedWidget = QStackedWidget()
+        
+        self.yenidenBoyutlandirmaWidget = QWidget()
+        self.dondurmeWidget = QWidget()
+        
+        self.yenidenBoyutlandirUI()
+        self.dondurmeUI()
+        
+        self.donusumStackedWidget.addWidget(self.yenidenBoyutlandirmaWidget)
+        self.donusumStackedWidget.addWidget(self.dondurmeWidget)
+        
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        
+        form = QFormLayout()
+        form.addRow("İşlem Seçimi: ",self.islemComboBox)
+        form.addRow(line)
+        form.addRow(self.donusumStackedWidget)
+        self.donusumTab.setLayout(form)
+        
         
     def ekrandaGoster(self,gosterilecekResim):
         #filtreleme float64 tipinde 2d array çıktı veriyor ekrana basmak için bize uint8 tipinde 3d array(rgb) gerekli
@@ -159,7 +189,9 @@ class MerkeziWidget(QWidget):
         pixmap = QPixmap(qImg)
         pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
         self.etiket.setPixmap(pix)
-        
+    
+###############################################################################
+#FİLTRE ALANI        
     
     def filtreUygula(self):
         resim = io.imread(self.acikResim)
@@ -218,7 +250,9 @@ class MerkeziWidget(QWidget):
             self.islenmis = filtrelenmis
             self.ekrandaGoster(filtrelenmis)
             
-         
+###############################################################################
+#HİSTOGRAM ALANI 
+            
     def histogramGoruntule(self):
         #resmin np arraya dönüştürülmesi
         resim = io.imread(self.acikResim)
@@ -254,7 +288,44 @@ class MerkeziWidget(QWidget):
         self.islenmis = esitlenmis
         self.ekrandaGoster(esitlenmis)
 
-
+###############################################################################
+#DÖNÜŞÜM ALANI
+    def islemSecimiUygula(self):
+        index = self.islemComboBox.currentIndex()
+        self.donusumStackedWidget.setCurrentIndex(index)
+            
+        
+        
+    def yenidenBoyutlandir(self):
+        genislik = int(self.genislikSatiri.text())
+        yukseklik = int(self.yukseklikSatiri.text())
+        #resmin np arraya dönüştürülmesi
+        resim = io.imread(self.acikResim)
+        
+        boyutlandirilmis = transform.resize(resim,(yukseklik,genislik))
+        
+        self.islenmis = boyutlandirilmis
+        self.ekrandaGoster(boyutlandirilmis)
+        
+    def yenidenBoyutlandirUI(self):
+        self.genislikSatiri = QLineEdit()
+        self.yukseklikSatiri = QLineEdit()
+        
+        boyutlandirmaButon = QPushButton("Yeniden Boyutlandır")
+        boyutlandirmaButon.clicked.connect(self.yenidenBoyutlandir)
+        
+        form = QFormLayout()
+        form.addRow("Genişlik:",self.genislikSatiri)
+        form.addRow("Yükseklik:",self.yukseklikSatiri)
+        form.addRow(boyutlandirmaButon)
+        self.yenidenBoyutlandirmaWidget.setLayout(form)
+        
+    def dondurmeUI(self):
+        boyutlandirmaButon = QPushButton("Döndür")
+        form = QFormLayout()
+        form.addRow(boyutlandirmaButon)
+        self.dondurmeWidget.setLayout(form)
+        
     
 if __name__ == "__main__":
     app = QCoreApplication.instance()
