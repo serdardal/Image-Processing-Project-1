@@ -136,9 +136,14 @@ class MerkeziWidget(QWidget):
         histogramButon.resize(80,30)
         histogramButon.clicked.connect(self.histogramGoruntule)
         
+        esitleButon = QPushButton("Histogram Eşitle")
+        esitleButon.resize(80,30)
+        esitleButon.clicked.connect(self.histogramEsitle)
+        
         form = QFormLayout()
         form.addRow(histogramButon)
         form.addRow(self.histogramEtiket)
+        form.addRow(esitleButon)
         self.histogramTab.setLayout(form)
         
         
@@ -213,8 +218,7 @@ class MerkeziWidget(QWidget):
             self.islenmis = filtrelenmis
             self.ekrandaGoster(filtrelenmis)
             
-    
-        
+         
     def histogramGoruntule(self):
         #resmin np arraya dönüştürülmesi
         resim = io.imread(self.acikResim)
@@ -238,6 +242,17 @@ class MerkeziWidget(QWidget):
         pixmap = QPixmap(qImg)
         pix = pixmap.scaled(380, 380, Qt.KeepAspectRatio)
         self.histogramEtiket.setPixmap(pix)
+        
+        
+    def histogramEsitle(self):
+        #resmin np arraya dönüştürülmesi
+        resim = io.imread(self.acikResim)
+        
+        #histogramın eşitlenmesi
+        esitlenmis = exposure.equalize_hist(resim)
+        
+        self.islenmis = esitlenmis
+        self.ekrandaGoster(esitlenmis)
 
 
     
