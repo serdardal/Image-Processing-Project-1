@@ -152,19 +152,22 @@ class MerkeziWidget(QWidget):
         
     def donusumUI(self):
         self.islemComboBox = QComboBox()
-        self.islemComboBox.addItems(["Yeniden Boyutlandırma", "Döndürme", "Kırpma"])
+        self.islemComboBox.addItems(["Yeniden Boyutlandırma", "Döndürme", "Girdap"])
         self.islemComboBox.currentIndexChanged.connect(self.islemSecimiUygula)
         
         self.donusumStackedWidget = QStackedWidget()
         
         self.yenidenBoyutlandirmaWidget = QWidget()
         self.dondurmeWidget = QWidget()
+        self.girdapWidget = QWidget()
         
         self.yenidenBoyutlandirUI()
         self.dondurmeUI()
+        self.girdapUI()
         
         self.donusumStackedWidget.addWidget(self.yenidenBoyutlandirmaWidget)
         self.donusumStackedWidget.addWidget(self.dondurmeWidget)
+        self.donusumStackedWidget.addWidget(self.girdapWidget)
         
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
@@ -320,11 +323,78 @@ class MerkeziWidget(QWidget):
         form.addRow(boyutlandirmaButon)
         self.yenidenBoyutlandirmaWidget.setLayout(form)
         
+    def solaDondur(self):
+        aci = int(self.dondurmeAcisi.text())
+        
+        resim = io.imread(self.acikResim)
+        
+        dondurulmus = transform.rotate(resim,aci)
+        
+        self.islenmis = dondurulmus
+        self.ekrandaGoster(dondurulmus)
+        
+    def sagaDondur(self):
+        aci = int(self.dondurmeAcisi.text())
+        
+        resim = io.imread(self.acikResim)
+        
+        dondurulmus = transform.rotate(resim,360 - aci)
+        
+        self.islenmis = dondurulmus
+        self.ekrandaGoster(dondurulmus)
+        
+        
     def dondurmeUI(self):
-        boyutlandirmaButon = QPushButton("Döndür")
+        self.dondurmeAcisi = QLineEdit()
+        self.dondurmeAcisi.setText("0")
+        
+        boyutlandirmaButonSol = QPushButton("Sola Döndür")
+        boyutlandirmaButonSol.clicked.connect(self.solaDondur)
+        
+        boyutlandirmaButonSag = QPushButton("Sağa Döndür")
+        boyutlandirmaButonSag.clicked.connect(self.sagaDondur)
+        
+        dondurmeButonWidget = QWidget()
+        
+        dondurmeButonLayout = QHBoxLayout()
+        dondurmeButonLayout.addWidget(boyutlandirmaButonSol)
+        dondurmeButonLayout.addWidget(boyutlandirmaButonSag)
+        dondurmeButonWidget.setLayout(dondurmeButonLayout)
+        
         form = QFormLayout()
-        form.addRow(boyutlandirmaButon)
+        form.addRow("Döndürme Açısı:",self.dondurmeAcisi)
+        form.addRow(dondurmeButonWidget)
         self.dondurmeWidget.setLayout(form)
+        
+        
+    def girdapUygula(self):
+        resim = io.imread(self.acikResim)
+        
+        yaricap = int(self.yaricapInput.text())
+        guc = float(self.gucInput.text())
+        
+        girdapUygulanmis = transform.swirl(resim, radius = yaricap, strength = guc)
+        
+        self.islenmis = girdapUygulanmis
+        self.ekrandaGoster(girdapUygulanmis)
+        
+        
+    def girdapUI(self):
+        self.yaricapInput = QLineEdit()
+        self.yaricapInput.setText("100")
+        
+        self.gucInput = QLineEdit()
+        self.gucInput.setText("1.0")
+        
+        
+        girdapButon = QPushButton("Girdap")
+        girdapButon.clicked.connect(self.girdapUygula)
+        
+        form = QFormLayout()
+        form.addRow("Yarıçap:", self.yaricapInput)
+        form.addRow("Güç(float):", self.gucInput)
+        form.addRow(girdapButon)
+        self.girdapWidget.setLayout(form)
         
     
 if __name__ == "__main__":
