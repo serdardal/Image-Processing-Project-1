@@ -28,7 +28,7 @@ class Pencere(QMainWindow):
         self.widget = MerkeziWidget()
         self.setCentralWidget(self.widget)
         self.setUI()
-        self.resize(800,600)
+        self.resize(800,630)
     
     
     def setUI(self):
@@ -62,11 +62,23 @@ class MerkeziWidget(QWidget):
 
         
     def setUI(self):
-        self.etiket = QLabel(self)
-        self.etiket.resize(400,600)
+        self.etiket = QLabel()
         pixmap = QPixmap()
         pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
         self.etiket.setPixmap(pix)
+        
+        self.cozunurluk = QLabel()
+        self.cozunurluk.setText("")
+        self.cozunurluk.setMaximumHeight(10)
+        
+        resimAlani = QWidget(self)
+        resimAlani.setMinimumWidth(400)
+        resimAlani.setMinimumHeight(600)
+        
+        resimAlaniLayout = QVBoxLayout()
+        resimAlaniLayout.addWidget(self.cozunurluk)
+        resimAlaniLayout.addWidget(self.etiket)
+        resimAlani.setLayout(resimAlaniLayout)
         
         islemAlani = QTabWidget(self)
         islemAlani.move(401,0)
@@ -87,18 +99,6 @@ class MerkeziWidget(QWidget):
         self.donusumUI()
     
         
-    def deneme(self):
-        pixmap = QPixmap('C:/Users/serdar/Desktop/masaustu.jpg')
-        pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
-        self.etiket.setPixmap(pix)
-        
-    def serdar(self):
-        pixmap = QPixmap('C:/Users/serdar/Desktop/züreyfa.jpg')
-        form = QFormLayout()
-        etiket = QLabel("serdar")
-        form.addRow(etiket)
-        self.resimAlani.setLayout(form)
-        
     def dosyaAc(self):
         dosyaYolu = QFileDialog.getOpenFileName(self,"Dosya Seç", "", "Resim Dosyası (*.jpg *.png *jpeg *.xpm)")
         if dosyaYolu[0]:
@@ -107,7 +107,10 @@ class MerkeziWidget(QWidget):
             self.etiket.setPixmap(pix)
             
             self.acikResim = dosyaYolu[0]
-        print(dosyaYolu)
+            
+            cozString = str("Çözünürlük: {}x{}".format(pixmap.width(),pixmap.height()))    
+            self.cozunurluk.setText(cozString)
+        
         
             
     def dosyaKaydet(self):
@@ -152,7 +155,7 @@ class MerkeziWidget(QWidget):
         
     def donusumUI(self):
         self.islemComboBox = QComboBox()
-        self.islemComboBox.addItems(["Yeniden Boyutlandırma", "Döndürme", "Girdap"])
+        self.islemComboBox.addItems(["Yeniden Boyutlandırma", "Döndürme", "Girdap", "Yeniden Ölçeklendirme"])
         self.islemComboBox.currentIndexChanged.connect(self.islemSecimiUygula)
         
         self.donusumStackedWidget = QStackedWidget()
@@ -160,14 +163,17 @@ class MerkeziWidget(QWidget):
         self.yenidenBoyutlandirmaWidget = QWidget()
         self.dondurmeWidget = QWidget()
         self.girdapWidget = QWidget()
+        self.yenidenOlceklendirmeWidget = QWidget()
         
         self.yenidenBoyutlandirUI()
         self.dondurmeUI()
         self.girdapUI()
+        self.yenidenOlceklendirmeUI()
         
         self.donusumStackedWidget.addWidget(self.yenidenBoyutlandirmaWidget)
         self.donusumStackedWidget.addWidget(self.dondurmeWidget)
         self.donusumStackedWidget.addWidget(self.girdapWidget)
+        self.donusumStackedWidget.addWidget(self.yenidenOlceklendirmeWidget)
         
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
@@ -192,6 +198,10 @@ class MerkeziWidget(QWidget):
         pixmap = QPixmap(qImg)
         pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
         self.etiket.setPixmap(pix)
+        
+        cozString = str("Çözünürlük: {}x{}".format(width,height))
+        
+        self.cozunurluk.setText(cozString)
     
 ###############################################################################
 #FİLTRE ALANI        
@@ -395,6 +405,36 @@ class MerkeziWidget(QWidget):
         form.addRow("Güç(float):", self.gucInput)
         form.addRow(girdapButon)
         self.girdapWidget.setLayout(form)
+        
+    
+    def olceklendir(self):
+        resim = io.imread(self.acikResim)
+        
+        olcekEn = float(self.olcekEnInput.text())
+        olcekBoy = float(self.olcekBoyInput.text())
+        
+        olceklendirilmis = transform.rescale(resim,(olcekBoy,olcekEn), multichannel = True)
+        
+        self.islenmis = olceklendirilmis
+        
+        self.ekrandaGoster(olceklendirilmis)
+    
+        
+    def yenidenOlceklendirmeUI(self):
+        self.olcekEnInput = QLineEdit()
+        self.olcekEnInput.setText("1.0")
+        
+        self.olcekBoyInput = QLineEdit()
+        self.olcekBoyInput.setText("1.0")
+        
+        olceklendirmeButon = QPushButton("Ölçeklendir")
+        olceklendirmeButon.clicked.connect(self.olceklendir)
+        
+        form = QFormLayout()
+        form.addRow("En Ölçek:",self.olcekEnInput)
+        form.addRow("Boy Ölçek:",self.olcekBoyInput)
+        form.addRow(olceklendirmeButon)
+        self.yenidenOlceklendirmeWidget.setLayout(form)
         
     
 if __name__ == "__main__":
