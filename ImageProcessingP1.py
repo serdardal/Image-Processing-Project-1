@@ -102,14 +102,10 @@ class MerkeziWidget(QWidget):
     def dosyaAc(self):
         dosyaYolu = QFileDialog.getOpenFileName(self,"Dosya Seç", "", "Resim Dosyası (*.jpg *.png *jpeg *.xpm)")
         if dosyaYolu[0]:
-            pixmap = QPixmap(dosyaYolu[0])
-            pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
-            self.etiket.setPixmap(pix)
-            
+            resim = io.imread(dosyaYolu[0])
+            self.ekrandaGoster(resim)
+           
             self.acikResim = dosyaYolu[0]
-            
-            cozString = str("Çözünürlük: {}x{}".format(pixmap.width(),pixmap.height()))    
-            self.cozunurluk.setText(cozString)
         
         
             
@@ -155,7 +151,7 @@ class MerkeziWidget(QWidget):
         
     def donusumUI(self):
         self.islemComboBox = QComboBox()
-        self.islemComboBox.addItems(["Yeniden Boyutlandırma", "Döndürme", "Girdap", "Yeniden Ölçeklendirme"])
+        self.islemComboBox.addItems(["Yeniden Boyutlandırma", "Döndürme", "Girdap", "Yeniden Ölçeklendirme","Kırpma"])
         self.islemComboBox.currentIndexChanged.connect(self.islemSecimiUygula)
         
         self.donusumStackedWidget = QStackedWidget()
@@ -164,16 +160,19 @@ class MerkeziWidget(QWidget):
         self.dondurmeWidget = QWidget()
         self.girdapWidget = QWidget()
         self.yenidenOlceklendirmeWidget = QWidget()
+        self.kirpmaWidget = QWidget()
         
         self.yenidenBoyutlandirUI()
         self.dondurmeUI()
         self.girdapUI()
         self.yenidenOlceklendirmeUI()
+        self.kirpmaUI()
         
         self.donusumStackedWidget.addWidget(self.yenidenBoyutlandirmaWidget)
         self.donusumStackedWidget.addWidget(self.dondurmeWidget)
         self.donusumStackedWidget.addWidget(self.girdapWidget)
         self.donusumStackedWidget.addWidget(self.yenidenOlceklendirmeWidget)
+        self.donusumStackedWidget.addWidget(self.kirpmaWidget)
         
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
@@ -188,12 +187,16 @@ class MerkeziWidget(QWidget):
         
     def ekrandaGoster(self,gosterilecekResim):
         #filtreleme float64 tipinde 2d array çıktı veriyor ekrana basmak için bize uint8 tipinde 3d array(rgb) gerekli
-        donusturulmus = gray2rgb(img_as_ubyte(gosterilecekResim))
+        if not gosterilecekResim.dtype == 'uint8':
+            gosterilecekResim = img_as_ubyte(gosterilecekResim)
             
+        if len(gosterilecekResim.shape) == 2:
+            gosterilecekResim = gray2rgb(gosterilecekResim)
+
         #np arrayin QImage dönüştürülmesi
-        height, width, channel = donusturulmus.shape
+        height, width, channel = gosterilecekResim.shape
         bytesPerLine = 3 * width
-        qImg = QImage(donusturulmus.data, width, height, bytesPerLine, QImage.Format_RGB888)
+        qImg = QImage(gosterilecekResim.data, width, height, bytesPerLine, QImage.Format_RGB888)
         
         pixmap = QPixmap(qImg)
         pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
@@ -435,6 +438,50 @@ class MerkeziWidget(QWidget):
         form.addRow("Boy Ölçek:",self.olcekBoyInput)
         form.addRow(olceklendirmeButon)
         self.yenidenOlceklendirmeWidget.setLayout(form)
+        
+    
+    def kirp(self):
+        resim = io.imread(self.acikResim)
+        x1 = int(self.x1Input.text())
+        y1 = int(self.y1Input.text())
+        x2 = int(self.x2Input.text())
+        y2 = int(self.y2Input.text())
+        
+        kirpilmis = np.copy(resim[y1:y2,x1:x2])
+        
+        self.islenmis = kirpilmis
+        self.ekrandaGoster(kirpilmis)
+        
+        
+    def kirpmaUI(self):
+        self.x1Input = QLineEdit()      
+        self.y1Input = QLineEdit()
+        
+        self.x2Input = QLineEdit()     
+        self.y2Input = QLineEdit()
+        
+        solUst = QWidget()
+        
+        solUstLayout = QHBoxLayout()
+        solUstLayout.addWidget(self.x1Input)
+        solUstLayout.addWidget(self.y1Input)
+        solUst.setLayout(solUstLayout)
+        
+        sagAlt = QWidget()
+        
+        sagAltLayout = QHBoxLayout()
+        sagAltLayout.addWidget(self.x2Input)
+        sagAltLayout.addWidget(self.y2Input)
+        sagAlt.setLayout(sagAltLayout)
+        
+        kirpmaButon = QPushButton("Kırp")
+        kirpmaButon.clicked.connect(self.kirp)
+        
+        form = QFormLayout()
+        form.addRow("Sol üst(x,y): ",solUst)
+        form.addRow("Sağ Alt(x,y): ",sagAlt)
+        form.addRow(kirpmaButon)
+        self.kirpmaWidget.setLayout(form)
         
     
 if __name__ == "__main__":
