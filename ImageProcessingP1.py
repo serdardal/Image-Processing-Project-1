@@ -271,7 +271,7 @@ class MerkeziWidget(QWidget):
             
         elif index == 2:
             filtrelenmis = feature.canny(gri)
-            self.islenmis = filtrelenmis
+            self.islenmis = filtrelenmis.astype(float)
             self.ekrandaGoster(filtrelenmis)
             
         elif index == 3:
