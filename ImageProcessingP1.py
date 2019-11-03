@@ -9,9 +9,8 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-from skimage import data, io, filters, img_as_ubyte, feature, exposure, transform
+from skimage import io, filters, img_as_ubyte, feature, exposure, transform
 from skimage.color import rgb2gray, gray2rgb
-from scipy.misc import imsave
 
 import numpy as np
 
@@ -33,16 +32,16 @@ class Pencere(QMainWindow):
     
     def setUI(self):
         
-        self.ActionOluştur()
+        self.ActionOlustur()
         self.MenuOlustur()
         
-        self.setWindowTitle("Fotoşok")
+        self.setWindowTitle("Görüntü İşleme")
         self.show()
         
         
-    def ActionOluştur(self):
+    def ActionOlustur(self):
         self.resimYukleAction = QAction("Aç", self, triggered=self.widget.dosyaAc)
-        self.resimKaydetAction = QAction("Kaydet",self, triggered= self.widget.dosyaKaydet)
+        self.resimKaydetAction = QAction("Kaydet",self, triggered = self.widget.dosyaKaydet)
         
     def MenuOlustur(self):
         self.dosyaMenu = QMenu("Dosya",self)
@@ -84,19 +83,23 @@ class MerkeziWidget(QWidget):
         islemAlani.move(401,0)
         islemAlani.resize(400,600)
         
+        
         self.filtreTab = QWidget()
         self.histogramTab = QWidget()
-        self.donusumTab = QWidget()
+        self.uzaysalDonusumTab = QWidget()
+        self.yogunlukDonusumuTab = QWidget()
         
         islemAlani.addTab(self.filtreTab, "Filtre")
         islemAlani.addTab(self.histogramTab, "Histogram")
-        islemAlani.addTab(self.donusumTab,"Dönüşüm")
+        islemAlani.addTab(self.uzaysalDonusumTab,"U. Dönüşüm")
+        islemAlani.addTab(self.yogunlukDonusumuTab,"Y. Dönüşüm")
         islemAlani.setTabPosition(QTabWidget.East)
         
         
         self.filtreUI()
         self.histogramUI()
-        self.donusumUI()
+        self.uzaysalDonusumUI()
+        self.yogunlukDonusumuUI()
     
         
     def dosyaAc(self):
@@ -149,12 +152,12 @@ class MerkeziWidget(QWidget):
         form.addRow(esitleButon)
         self.histogramTab.setLayout(form)
         
-    def donusumUI(self):
+    def uzaysalDonusumUI(self):
         self.islemComboBox = QComboBox()
         self.islemComboBox.addItems(["Yeniden Boyutlandırma", "Döndürme", "Girdap", "Yeniden Ölçeklendirme","Kırpma"])
         self.islemComboBox.currentIndexChanged.connect(self.islemSecimiUygula)
         
-        self.donusumStackedWidget = QStackedWidget()
+        self.uzaysalDonusumStackedWidget = QStackedWidget()
         
         self.yenidenBoyutlandirmaWidget = QWidget()
         self.dondurmeWidget = QWidget()
@@ -168,11 +171,11 @@ class MerkeziWidget(QWidget):
         self.yenidenOlceklendirmeUI()
         self.kirpmaUI()
         
-        self.donusumStackedWidget.addWidget(self.yenidenBoyutlandirmaWidget)
-        self.donusumStackedWidget.addWidget(self.dondurmeWidget)
-        self.donusumStackedWidget.addWidget(self.girdapWidget)
-        self.donusumStackedWidget.addWidget(self.yenidenOlceklendirmeWidget)
-        self.donusumStackedWidget.addWidget(self.kirpmaWidget)
+        self.uzaysalDonusumStackedWidget.addWidget(self.yenidenBoyutlandirmaWidget)
+        self.uzaysalDonusumStackedWidget.addWidget(self.dondurmeWidget)
+        self.uzaysalDonusumStackedWidget.addWidget(self.girdapWidget)
+        self.uzaysalDonusumStackedWidget.addWidget(self.yenidenOlceklendirmeWidget)
+        self.uzaysalDonusumStackedWidget.addWidget(self.kirpmaWidget)
         
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
@@ -181,8 +184,31 @@ class MerkeziWidget(QWidget):
         form = QFormLayout()
         form.addRow("İşlem Seçimi: ",self.islemComboBox)
         form.addRow(line)
-        form.addRow(self.donusumStackedWidget)
-        self.donusumTab.setLayout(form)
+        form.addRow(self.uzaysalDonusumStackedWidget)
+        self.uzaysalDonusumTab.setLayout(form)
+        
+    def yogunlukDonusumuUI(self):
+        self.yogunlukIslemComboBox = QComboBox()
+        self.yogunlukIslemComboBox.addItems(["Gamma"])
+        self.yogunlukIslemComboBox.currentIndexChanged.connect(self.yogunlukIslemSecimiUygula)
+        
+        self.yogunlukDonusumuStackedWidget = QStackedWidget()
+        
+        self.gammaWidget = QWidget()
+        
+        self.gammaUI()
+        
+        self.yogunlukDonusumuStackedWidget.addWidget(self.gammaWidget)
+        
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        
+        form = QFormLayout()
+        form.addRow("İşlem Seçimi: ",self.yogunlukIslemComboBox)
+        form.addRow(line)
+        form.addRow(self.yogunlukDonusumuStackedWidget)
+        self.yogunlukDonusumuTab.setLayout(form)
         
         
     def ekrandaGoster(self,gosterilecekResim):
@@ -305,10 +331,10 @@ class MerkeziWidget(QWidget):
         self.ekrandaGoster(esitlenmis)
 
 ###############################################################################
-#DÖNÜŞÜM ALANI
+#UZAYSAL DÖNÜŞÜM ALANI
     def islemSecimiUygula(self):
         index = self.islemComboBox.currentIndex()
-        self.donusumStackedWidget.setCurrentIndex(index)
+        self.uzaysalDonusumStackedWidget.setCurrentIndex(index)
             
         
         
@@ -482,6 +508,44 @@ class MerkeziWidget(QWidget):
         form.addRow("Sağ Alt(x,y): ",sagAlt)
         form.addRow(kirpmaButon)
         self.kirpmaWidget.setLayout(form)
+        
+        
+###############################################################################
+#YOĞUNLUK DÖNÜŞÜMÜ ALANI
+        
+    def yogunlukIslemSecimiUygula(self):
+        index = self.yogunlukIslemComboBox.currentIndex()
+        self.yogunlukDonusumuStackedWidget.setCurrentIndex(index)
+        
+    
+    def gammaUygula(self):
+        resim = io.imread(self.acikResim)
+        
+        gammaDegeri = float(self.gammaLineEdit.text())
+        gainDegeri = float(self.gainLineEdit.text())
+        
+        gammaUygulanmis = exposure.adjust_gamma(resim,gammaDegeri, gainDegeri)
+        
+        self.islenmis = gammaUygulanmis
+        
+        self.ekrandaGoster(gammaUygulanmis)
+        
+    
+    def gammaUI(self):
+        self.gammaLineEdit = QLineEdit()
+        self.gammaLineEdit.setText("1.0")
+        
+        self.gainLineEdit = QLineEdit()
+        self.gainLineEdit.setText("1.0")
+        
+        gammaButon = QPushButton("Uygula")
+        gammaButon.clicked.connect(self.gammaUygula)
+        
+        form = QFormLayout()
+        form.addRow("Gamma: ",self.gammaLineEdit)
+        form.addRow("Gain: ",self.gainLineEdit)
+        form.addRow(gammaButon)
+        self.gammaWidget.setLayout(form)
         
     
 if __name__ == "__main__":
