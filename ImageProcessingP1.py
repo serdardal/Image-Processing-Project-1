@@ -14,6 +14,8 @@ from skimage.color import rgb2gray, gray2rgb
 
 import numpy as np
 
+import qimage2ndarray
+
 import matplotlib.pyplot as plt
 
 from datetime import datetime
@@ -219,17 +221,25 @@ class MerkeziWidget(QWidget):
         
         
     def ekrandaGoster(self,gosterilecekResim):
-        #filtreleme float64 tipinde 2d array çıktı veriyor ekrana basmak için bize uint8 tipinde 3d array(rgb) gerekli
-        if not gosterilecekResim.dtype == 'uint8':
-            gosterilecekResim = img_as_ubyte(gosterilecekResim)
-            
-        if len(gosterilecekResim.shape) == 2:
-            gosterilecekResim = gray2rgb(gosterilecekResim)
+        width = gosterilecekResim.shape[0]
+        height = gosterilecekResim.shape[1]
+        
+        qImg=None
+        
+        if len(gosterilecekResim.shape) == 3:
 
-        #np arrayin QImage dönüştürülmesi
-        height, width, channel = gosterilecekResim.shape
-        bytesPerLine = 3 * width
-        qImg = QImage(gosterilecekResim.data, width, height, bytesPerLine, QImage.Format_RGB888)
+            if not gosterilecekResim.dtype == 'uint8':
+                gosterilecekResim = img_as_ubyte(gosterilecekResim)
+                
+            qImg=qimage2ndarray.array2qimage(gosterilecekResim)
+            
+            
+        elif len(gosterilecekResim.shape) == 2:
+            if np.min(gosterilecekResim) < 0:
+                gosterilecekResim = (gosterilecekResim - np.min(gosterilecekResim))/np.ptp(gosterilecekResim)
+
+            gosterilecekResim = img_as_ubyte(gosterilecekResim)
+            qImg=qimage2ndarray.gray2qimage(gosterilecekResim)
         
         pixmap = QPixmap(qImg)
         pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
@@ -270,7 +280,7 @@ class MerkeziWidget(QWidget):
             self.ekrandaGoster(filtrelenmis)
             
         elif index == 4:
-            filtrelenmis = filters.laplace(resim)
+            filtrelenmis = filters.laplace(gri)
             self.islenmis = filtrelenmis
             self.ekrandaGoster(filtrelenmis)
             
