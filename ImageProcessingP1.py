@@ -189,16 +189,19 @@ class MerkeziWidget(QWidget):
         
     def yogunlukDonusumuUI(self):
         self.yogunlukIslemComboBox = QComboBox()
-        self.yogunlukIslemComboBox.addItems(["Gamma"])
+        self.yogunlukIslemComboBox.addItems(["Gamma","Log"])
         self.yogunlukIslemComboBox.currentIndexChanged.connect(self.yogunlukIslemSecimiUygula)
         
         self.yogunlukDonusumuStackedWidget = QStackedWidget()
         
         self.gammaWidget = QWidget()
+        self.logWidget = QWidget()
         
         self.gammaUI()
+        self.logUI()
         
         self.yogunlukDonusumuStackedWidget.addWidget(self.gammaWidget)
+        self.yogunlukDonusumuStackedWidget.addWidget(self.logWidget)
         
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
@@ -522,7 +525,7 @@ class MerkeziWidget(QWidget):
         resim = io.imread(self.acikResim)
         
         gammaDegeri = float(self.gammaLineEdit.text())
-        gainDegeri = float(self.gainLineEdit.text())
+        gainDegeri = float(self.gammaGainLineEdit.text())
         
         gammaUygulanmis = exposure.adjust_gamma(resim,gammaDegeri, gainDegeri)
         
@@ -535,17 +538,49 @@ class MerkeziWidget(QWidget):
         self.gammaLineEdit = QLineEdit()
         self.gammaLineEdit.setText("1.0")
         
-        self.gainLineEdit = QLineEdit()
-        self.gainLineEdit.setText("1.0")
+        self.gammaGainLineEdit = QLineEdit()
+        self.gammaGainLineEdit.setText("1.0")
         
         gammaButon = QPushButton("Uygula")
         gammaButon.clicked.connect(self.gammaUygula)
         
         form = QFormLayout()
         form.addRow("Gamma: ",self.gammaLineEdit)
-        form.addRow("Gain: ",self.gainLineEdit)
+        form.addRow("Gain: ",self.gammaGainLineEdit)
         form.addRow(gammaButon)
         self.gammaWidget.setLayout(form)
+        
+        
+    def logUygula(self):
+        resim = io.imread(self.acikResim)
+        
+        gainDegeri = float(self.logGainLineEdit.text())
+        inverse = False
+        
+        if self.inverseCheckBox.isChecked():
+            inverse = True
+        
+        logUygulanmis = exposure.adjust_log(resim,gainDegeri, inverse)
+        
+        self.islenmis = logUygulanmis
+        
+        self.ekrandaGoster(logUygulanmis)
+        
+        
+    def logUI(self):
+        self.logGainLineEdit = QLineEdit()
+        self.logGainLineEdit.setText("1.0")
+        
+        self.inverseCheckBox = QCheckBox()
+        
+        logButon = QPushButton("Uygula")
+        logButon.clicked.connect(self.logUygula)
+        
+        form = QFormLayout()
+        form.addRow("Gain: ", self.logGainLineEdit)
+        form.addRow("Inverse: ", self.inverseCheckBox)
+        form.addRow(logButon)
+        self.logWidget.setLayout(form)
         
     
 if __name__ == "__main__":
