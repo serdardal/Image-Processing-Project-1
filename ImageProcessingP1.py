@@ -31,7 +31,6 @@ class Pencere(QMainWindow):
     
     
     def setUI(self):
-        
         self.ActionOlustur()
         self.MenuOlustur()
         
@@ -43,12 +42,14 @@ class Pencere(QMainWindow):
         self.resimYukleAction = QAction("Aç", self, triggered=self.widget.dosyaAc)
         self.resimKaydetAction = QAction("Kaydet",self, triggered = self.widget.dosyaKaydet)
         
+        
     def MenuOlustur(self):
         self.dosyaMenu = QMenu("Dosya",self)
         self.dosyaMenu.addAction(self.resimYukleAction)
         self.dosyaMenu.addAction(self.resimKaydetAction)
         
         self.menuBar().addMenu(self.dosyaMenu)
+        
         
 class MerkeziWidget(QWidget):
     def __init__(self):
@@ -58,7 +59,6 @@ class MerkeziWidget(QWidget):
                 
         self.setUI()
         
-
         
     def setUI(self):
         self.etiket = QLabel()
@@ -118,6 +118,7 @@ class MerkeziWidget(QWidget):
         if dosyaYolu[0]:
             io.imsave(dosyaYolu[0],self.islenmis)
             
+            
     def filtreUI(self):
         self.secim = QComboBox()
         self.secim.addItems(["Sobel","Hessian","Canny","Prewitt","Laplace","Sato","Unsharp mask","Threshold Niblack","Meijering","Threshold Sauvola"])
@@ -130,6 +131,7 @@ class MerkeziWidget(QWidget):
         form.addRow("Filtre Seçimi: ",self.secim)
         form.addRow(uygulaButon)
         self.filtreTab.setLayout(form)
+        
         
     def histogramUI(self):
         self.histogramEtiket = QLabel()
@@ -151,6 +153,7 @@ class MerkeziWidget(QWidget):
         form.addRow(self.histogramEtiket)
         form.addRow(esitleButon)
         self.histogramTab.setLayout(form)
+        
         
     def uzaysalDonusumUI(self):
         self.islemComboBox = QComboBox()
@@ -186,6 +189,7 @@ class MerkeziWidget(QWidget):
         form.addRow(line)
         form.addRow(self.uzaysalDonusumStackedWidget)
         self.uzaysalDonusumTab.setLayout(form)
+        
         
     def yogunlukDonusumuUI(self):
         self.yogunlukIslemComboBox = QComboBox()
@@ -340,7 +344,6 @@ class MerkeziWidget(QWidget):
         self.uzaysalDonusumStackedWidget.setCurrentIndex(index)
             
         
-        
     def yenidenBoyutlandir(self):
         genislik = int(self.genislikSatiri.text())
         yukseklik = int(self.yukseklikSatiri.text())
@@ -351,6 +354,7 @@ class MerkeziWidget(QWidget):
         
         self.islenmis = boyutlandirilmis
         self.ekrandaGoster(boyutlandirilmis)
+        
         
     def yenidenBoyutlandirUI(self):
         self.genislikSatiri = QLineEdit()
@@ -365,6 +369,7 @@ class MerkeziWidget(QWidget):
         form.addRow(boyutlandirmaButon)
         self.yenidenBoyutlandirmaWidget.setLayout(form)
         
+        
     def solaDondur(self):
         aci = int(self.dondurmeAcisi.text())
         
@@ -374,6 +379,7 @@ class MerkeziWidget(QWidget):
         
         self.islenmis = dondurulmus
         self.ekrandaGoster(dondurulmus)
+        
         
     def sagaDondur(self):
         aci = int(self.dondurmeAcisi.text())
