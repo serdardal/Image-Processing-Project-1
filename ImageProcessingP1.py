@@ -90,11 +90,13 @@ class MerkeziWidget(QWidget):
         self.histogramTab = QWidget()
         self.uzaysalDonusumTab = QWidget()
         self.yogunlukDonusumuTab = QWidget()
+        self.morfolojiTab = QWidget()
         
         islemAlani.addTab(self.filtreTab, "Filtre")
         islemAlani.addTab(self.histogramTab, "Histogram")
         islemAlani.addTab(self.uzaysalDonusumTab,"U. Dönüşüm")
         islemAlani.addTab(self.yogunlukDonusumuTab,"Y. Dönüşüm")
+        islemAlani.addTab(self.morfolojiTab, "Morfoloji")
         islemAlani.setTabPosition(QTabWidget.East)
         
         
@@ -102,6 +104,7 @@ class MerkeziWidget(QWidget):
         self.histogramUI()
         self.uzaysalDonusumUI()
         self.yogunlukDonusumuUI()
+        self.morfolojiUI()
     
         
     def dosyaAc(self):
@@ -224,6 +227,21 @@ class MerkeziWidget(QWidget):
         form.addRow(line)
         form.addRow(self.yogunlukDonusumuStackedWidget)
         self.yogunlukDonusumuTab.setLayout(form)
+        
+    
+    def morfolojiUI(self):
+        self.morfolojikIslemComboBox = QComboBox()
+        self.morfolojikIslemComboBox.addItems([])
+        self.morfolojikIslemComboBox.currentIndexChanged.connect(self.morfolojikIslemUygula)
+        
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        
+        form = QFormLayout()
+        form.addRow(self.morfolojikIslemComboBox)
+        form.addRow(line)
+        self.morfolojiTab.setLayout(form)
         
         
     def ekrandaGoster(self,gosterilecekResim):
@@ -676,6 +694,14 @@ class MerkeziWidget(QWidget):
         form.addRow("Nbins: ", self.nbinsLineEdit)
         form.addRow(equalizeAdapthistButton)
         self.equalizeAdapthistWidget.setLayout(form)
+        
+        
+###############################################################################
+#MORFOLOJİK İŞLEM ALANI
+        
+        
+    def morfolojikIslemUygula(self):
+        pass
         
     
 if __name__ == "__main__":
