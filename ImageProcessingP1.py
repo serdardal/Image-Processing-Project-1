@@ -110,7 +110,7 @@ class MerkeziWidget(QWidget):
             resim = io.imread(dosyaYolu[0])
             self.ekrandaGoster(resim)
            
-            self.acikResim = dosyaYolu[0]
+            self.acikResim = io.imread(dosyaYolu[0])
         
         
             
@@ -195,19 +195,25 @@ class MerkeziWidget(QWidget):
         
     def yogunlukDonusumuUI(self):
         self.yogunlukIslemComboBox = QComboBox()
-        self.yogunlukIslemComboBox.addItems(["Gamma","Log"])
+        self.yogunlukIslemComboBox.addItems(["Gamma","Log","Sigmoid","Equalize Adapthist"])
         self.yogunlukIslemComboBox.currentIndexChanged.connect(self.yogunlukIslemSecimiUygula)
         
         self.yogunlukDonusumuStackedWidget = QStackedWidget()
         
         self.gammaWidget = QWidget()
         self.logWidget = QWidget()
+        self.sigmoidWidget = QWidget()
+        self.equalizeAdapthistWidget = QWidget()
         
         self.gammaUI()
         self.logUI()
+        self.sigmoidUI()
+        self.equalizeAdapthistUI()
         
         self.yogunlukDonusumuStackedWidget.addWidget(self.gammaWidget)
         self.yogunlukDonusumuStackedWidget.addWidget(self.logWidget)
+        self.yogunlukDonusumuStackedWidget.addWidget(self.sigmoidWidget)
+        self.yogunlukDonusumuStackedWidget.addWidget(self.equalizeAdapthistWidget)
         
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
@@ -253,7 +259,7 @@ class MerkeziWidget(QWidget):
 #FİLTRE ALANI        
     
     def filtreUygula(self):
-        resim = io.imread(self.acikResim)
+        resim = self.acikResim
         
         #filtreler için 2d arraya dönüştürülmesi
         gri = rgb2gray(resim)
@@ -314,7 +320,7 @@ class MerkeziWidget(QWidget):
             
     def histogramGoruntule(self):
         #resmin np arraya dönüştürülmesi
-        resim = io.imread(self.acikResim)
+        resim = self.acikResim
         
         #histogramın oluşturulması
         hist, hist_centers = exposure.histogram(resim)
@@ -339,7 +345,7 @@ class MerkeziWidget(QWidget):
         
     def histogramEsitle(self):
         #resmin np arraya dönüştürülmesi
-        resim = io.imread(self.acikResim)
+        resim = self.acikResim
         
         #histogramın eşitlenmesi
         esitlenmis = exposure.equalize_hist(resim)
@@ -358,7 +364,7 @@ class MerkeziWidget(QWidget):
         genislik = int(self.genislikSatiri.text())
         yukseklik = int(self.yukseklikSatiri.text())
         #resmin np arraya dönüştürülmesi
-        resim = io.imread(self.acikResim)
+        resim = self.acikResim
         
         boyutlandirilmis = transform.resize(resim,(yukseklik,genislik))
         
@@ -383,7 +389,7 @@ class MerkeziWidget(QWidget):
     def solaDondur(self):
         aci = int(self.dondurmeAcisi.text())
         
-        resim = io.imread(self.acikResim)
+        resim = self.acikResim
         
         dondurulmus = transform.rotate(resim,aci)
         
@@ -394,7 +400,7 @@ class MerkeziWidget(QWidget):
     def sagaDondur(self):
         aci = int(self.dondurmeAcisi.text())
         
-        resim = io.imread(self.acikResim)
+        resim = self.acikResim
         
         dondurulmus = transform.rotate(resim,360 - aci)
         
@@ -426,7 +432,7 @@ class MerkeziWidget(QWidget):
         
         
     def girdapUygula(self):
-        resim = io.imread(self.acikResim)
+        resim = self.acikResim
         
         yaricap = int(self.yaricapInput.text())
         guc = float(self.gucInput.text())
@@ -456,7 +462,7 @@ class MerkeziWidget(QWidget):
         
     
     def olceklendir(self):
-        resim = io.imread(self.acikResim)
+        resim = self.acikResim
         
         olcekEn = float(self.olcekEnInput.text())
         olcekBoy = float(self.olcekBoyInput.text())
@@ -486,7 +492,7 @@ class MerkeziWidget(QWidget):
         
     
     def kirp(self):
-        resim = io.imread(self.acikResim)
+        resim = self.acikResim
         x1 = int(self.x1Input.text())
         y1 = int(self.y1Input.text())
         x2 = int(self.x2Input.text())
@@ -538,7 +544,7 @@ class MerkeziWidget(QWidget):
         
     
     def gammaUygula(self):
-        resim = io.imread(self.acikResim)
+        resim = self.acikResim
         
         gammaDegeri = float(self.gammaLineEdit.text())
         gainDegeri = float(self.gammaGainLineEdit.text())
@@ -568,7 +574,7 @@ class MerkeziWidget(QWidget):
         
         
     def logUygula(self):
-        resim = io.imread(self.acikResim)
+        resim = self.acikResim
         
         gainDegeri = float(self.logGainLineEdit.text())
         inverse = False
@@ -597,6 +603,79 @@ class MerkeziWidget(QWidget):
         form.addRow("Inverse: ", self.inverseCheckBox)
         form.addRow(logButon)
         self.logWidget.setLayout(form)
+        
+        
+    def sigmoidUygula(self):
+        resim = self.acikResim
+        
+        cutoffDegeri = float(self.sigmoidCutoffLineEdit.text())
+        gainDegeri =float(self.sigmoidGainLineEdit.text())
+        inverse = False
+        
+        if self.sigmoidInverseCheckBox.isChecked():
+            inverse = True
+        
+        sigmoidUygulanmis = exposure.adjust_sigmoid(resim, cutoffDegeri, gainDegeri, inverse)
+        
+        self.islenmis = sigmoidUygulanmis
+        
+        self.ekrandaGoster(sigmoidUygulanmis)
+        
+        
+    def sigmoidUI(self):
+        self.sigmoidCutoffLineEdit = QLineEdit()
+        self.sigmoidCutoffLineEdit.setText("0.5")
+        
+        self.sigmoidGainLineEdit = QLineEdit()
+        self.sigmoidGainLineEdit.setText("10.0")
+        
+        self.sigmoidInverseCheckBox = QCheckBox()
+        
+        sigmoidButon = QPushButton("Uygula")
+        sigmoidButon.clicked.connect(self.sigmoidUygula)
+        
+        form = QFormLayout()
+        form.addRow("Cutoff: ", self.sigmoidCutoffLineEdit)
+        form.addRow("Gain: ", self.sigmoidGainLineEdit)
+        form.addRow("Inverse: ", self.sigmoidInverseCheckBox)
+        form.addRow(sigmoidButon)
+        self.sigmoidWidget.setLayout(form)
+        
+        
+    def equalizeAdapthistUygula(self):
+        resim = self.acikResim
+        
+        kernelSizeDegeri = None
+        if not self.kernelSizeLineEdit.text() == "" :
+            kernelSizeDegeri = float(self.kernelSizeLineEdit.text())
+        clipLimitDegeri = float(self.clipLimitLineEdit.text())
+        nbinsDegeri = int(self.nbinsLineEdit.text())
+        
+        equalizeAdapthistUygulanmis = exposure.equalize_adapthist(resim, kernelSizeDegeri, clipLimitDegeri, nbinsDegeri)
+        
+        self.islenmis = equalizeAdapthistUygulanmis
+        
+        self.ekrandaGoster(equalizeAdapthistUygulanmis)
+        
+    
+    def equalizeAdapthistUI(self):
+        self.kernelSizeLineEdit = QLineEdit()
+        
+        self.clipLimitLineEdit = QLineEdit()
+        self.clipLimitLineEdit.setText("0.01")
+        
+        self.nbinsLineEdit = QLineEdit()
+        self.nbinsLineEdit.setText("256")
+        
+        equalizeAdapthistButton = QPushButton("Uygula")
+        equalizeAdapthistButton.clicked.connect(self.equalizeAdapthistUygula)
+        
+        form = QFormLayout()
+        form.addRow("Kernel Size: ", self.kernelSizeLineEdit)
+        form.addRow("Clip Limit: ", self.clipLimitLineEdit)
+        form.addRow("Nbins: ", self.nbinsLineEdit)
+        form.addRow(equalizeAdapthistButton)
+        self.equalizeAdapthistWidget.setLayout(form)
         
     
 if __name__ == "__main__":
