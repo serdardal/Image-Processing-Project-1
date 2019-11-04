@@ -43,6 +43,7 @@ class Pencere(QMainWindow):
     def ActionOlustur(self):
         self.resimYukleAction = QAction("Aç", self, triggered=self.widget.dosyaAc)
         self.resimKaydetAction = QAction("Kaydet",self, triggered = self.widget.dosyaKaydet)
+        self.islenmisiKullanAction = QAction("İşlenmiş resmi kullan", self, triggered=self.widget.kullanilacakResmiDegistir, checkable=True)
         
         
     def MenuOlustur(self):
@@ -50,14 +51,21 @@ class Pencere(QMainWindow):
         self.dosyaMenu.addAction(self.resimYukleAction)
         self.dosyaMenu.addAction(self.resimKaydetAction)
         
+        self.tercihMenu = QMenu("Tercih", self)
+        self.tercihMenu.addAction(self.islenmisiKullanAction)
+        
         self.menuBar().addMenu(self.dosyaMenu)
+        self.menuBar().addMenu(self.tercihMenu)
         
         
 class MerkeziWidget(QWidget):
     def __init__(self):
         super().__init__()
+        self.resimDosyaYolu = None
         self.acikResim = None
         self.islenmis = None
+        
+        self.islenmisiKullan = False
                 
         self.setUI()
         
@@ -114,6 +122,7 @@ class MerkeziWidget(QWidget):
             self.ekrandaGoster(resim)
            
             self.acikResim = io.imread(dosyaYolu[0])
+            self.resimDosyaYolu = dosyaYolu[0]
         
         
             
@@ -122,6 +131,20 @@ class MerkeziWidget(QWidget):
         print(dosyaYolu[0])
         if dosyaYolu[0]:
             io.imsave(dosyaYolu[0],self.islenmis)
+            
+    
+    def kullanilacakResmiDegistir(self):
+        self.islenmisiKullan = not self.islenmisiKullan
+        
+        if self.islenmisiKullan == False:
+            self.acikResim = io.imread(self.resimDosyaYolu)
+        
+    
+    def islenmisResmiAyarla(self, resim):
+        if self.islenmisiKullan == True:
+            self.acikResim = resim
+            
+        self.islenmis = resim
             
             
     def filtreUI(self):
@@ -283,55 +306,40 @@ class MerkeziWidget(QWidget):
         gri = rgb2gray(resim)
         
         index = self.secim.currentIndex()
+        
+        filtrelenmis = None
         if index == 0:
             filtrelenmis = filters.sobel(gri)
-            self.islenmis = filtrelenmis
-            self.ekrandaGoster(filtrelenmis)
-            
+                   
         elif index == 1:
             filtrelenmis = filters.hessian(gri)
-            self.islenmis = filtrelenmis
-            self.ekrandaGoster(filtrelenmis)
             
         elif index == 2:
             filtrelenmis = feature.canny(gri)
-            self.islenmis = filtrelenmis.astype(float)
-            self.ekrandaGoster(filtrelenmis)
             
         elif index == 3:
             filtrelenmis = filters.prewitt(gri)
-            self.islenmis = filtrelenmis
-            self.ekrandaGoster(filtrelenmis)
             
         elif index == 4:
             filtrelenmis = filters.laplace(gri)
-            self.islenmis = filtrelenmis
-            self.ekrandaGoster(filtrelenmis)
             
         elif index == 5:
             filtrelenmis = filters.sato(gri)
-            self.islenmis = filtrelenmis
-            self.ekrandaGoster(filtrelenmis)
             
         elif index==6:
             filtrelenmis = filters.unsharp_mask(resim,radius= 2, amount=2)
-            self.islenmis = filtrelenmis
-            self.ekrandaGoster(filtrelenmis)
             
         elif index==7:
             filtrelenmis = filters.threshold_niblack(gri)
-            self.islenmis = filtrelenmis
-            self.ekrandaGoster(filtrelenmis)
             
         elif index==8:
             filtrelenmis = filters.meijering(gri)
-            self.islenmis = filtrelenmis
-            self.ekrandaGoster(filtrelenmis)
             
         elif index==9:
             filtrelenmis = filters.threshold_sauvola(gri)
-            self.islenmis = filtrelenmis
-            self.ekrandaGoster(filtrelenmis)
+            
+        self.islenmisResmiAyarla(filtrelenmis)
+        self.ekrandaGoster(filtrelenmis)
             
 ###############################################################################
 #HİSTOGRAM ALANI 
@@ -368,7 +376,7 @@ class MerkeziWidget(QWidget):
         #histogramın eşitlenmesi
         esitlenmis = exposure.equalize_hist(resim)
         
-        self.islenmis = esitlenmis
+        self.islenmisResmiAyarla(esitlenmis)
         self.ekrandaGoster(esitlenmis)
 
 ###############################################################################
@@ -386,7 +394,7 @@ class MerkeziWidget(QWidget):
         
         boyutlandirilmis = transform.resize(resim,(yukseklik,genislik))
         
-        self.islenmis = boyutlandirilmis
+        self.islenmisResmiAyarla(boyutlandirilmis)
         self.ekrandaGoster(boyutlandirilmis)
         
         
@@ -411,7 +419,7 @@ class MerkeziWidget(QWidget):
         
         dondurulmus = transform.rotate(resim,aci)
         
-        self.islenmis = dondurulmus
+        self.islenmisResmiAyarla(dondurulmus)
         self.ekrandaGoster(dondurulmus)
         
         
@@ -422,7 +430,7 @@ class MerkeziWidget(QWidget):
         
         dondurulmus = transform.rotate(resim,360 - aci)
         
-        self.islenmis = dondurulmus
+        self.islenmisResmiAyarla(dondurulmus)
         self.ekrandaGoster(dondurulmus)
         
         
@@ -457,7 +465,7 @@ class MerkeziWidget(QWidget):
         
         girdapUygulanmis = transform.swirl(resim, radius = yaricap, strength = guc)
         
-        self.islenmis = girdapUygulanmis
+        self.islenmisResmiAyarla(girdapUygulanmis)
         self.ekrandaGoster(girdapUygulanmis)
         
         
@@ -487,8 +495,7 @@ class MerkeziWidget(QWidget):
         
         olceklendirilmis = transform.rescale(resim,(olcekBoy,olcekEn), multichannel = True)
         
-        self.islenmis = olceklendirilmis
-        
+        self.islenmisResmiAyarla(olceklendirilmis)
         self.ekrandaGoster(olceklendirilmis)
     
         
@@ -518,7 +525,7 @@ class MerkeziWidget(QWidget):
         
         kirpilmis = np.copy(resim[y1:y2,x1:x2])
         
-        self.islenmis = kirpilmis
+        self.islenmisResmiAyarla(kirpilmis)
         self.ekrandaGoster(kirpilmis)
         
         
@@ -569,7 +576,7 @@ class MerkeziWidget(QWidget):
         
         gammaUygulanmis = exposure.adjust_gamma(resim,gammaDegeri, gainDegeri)
         
-        self.islenmis = gammaUygulanmis
+        self.islenmisResmiAyarla(gammaUygulanmis)
         
         self.ekrandaGoster(gammaUygulanmis)
         
@@ -602,7 +609,7 @@ class MerkeziWidget(QWidget):
         
         logUygulanmis = exposure.adjust_log(resim,gainDegeri, inverse)
         
-        self.islenmis = logUygulanmis
+        self.islenmisResmiAyarla(logUygulanmis)
         
         self.ekrandaGoster(logUygulanmis)
         
@@ -635,7 +642,7 @@ class MerkeziWidget(QWidget):
         
         sigmoidUygulanmis = exposure.adjust_sigmoid(resim, cutoffDegeri, gainDegeri, inverse)
         
-        self.islenmis = sigmoidUygulanmis
+        self.islenmisResmiAyarla(sigmoidUygulanmis)
         
         self.ekrandaGoster(sigmoidUygulanmis)
         
@@ -671,7 +678,7 @@ class MerkeziWidget(QWidget):
         
         equalizeAdapthistUygulanmis = exposure.equalize_adapthist(resim, kernelSizeDegeri, clipLimitDegeri, nbinsDegeri)
         
-        self.islenmis = equalizeAdapthistUygulanmis
+        self.islenmisResmiAyarla(equalizeAdapthistUygulanmis)
         
         self.ekrandaGoster(equalizeAdapthistUygulanmis)
         
