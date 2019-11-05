@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-from skimage import io, filters, img_as_ubyte, feature, exposure, transform
+from skimage import io, filters, img_as_ubyte, feature, exposure, transform, morphology
 from skimage.color import rgb2gray, gray2rgb
 
 import numpy as np
@@ -254,22 +254,31 @@ class MerkeziWidget(QWidget):
     
     def morfolojiUI(self):
         self.morfolojikIslemComboBox = QComboBox()
-        self.morfolojikIslemComboBox.addItems([])
+        self.morfolojikIslemComboBox.addItems(["Erosion"])
         self.morfolojikIslemComboBox.currentIndexChanged.connect(self.morfolojikIslemUygula)
+        
+        self.morfolojiStackedWidget = QStackedWidget()
+        
+        self.erosionWidget = QWidget()
+        
+        self.erosionUI()
+        
+        self.morfolojiStackedWidget.addWidget(self.erosionWidget)
         
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
         line.setFrameShadow(QFrame.Sunken)
         
         form = QFormLayout()
-        form.addRow(self.morfolojikIslemComboBox)
+        form.addRow("Morfolojik İşlem: ", self.morfolojikIslemComboBox)
         form.addRow(line)
+        form.addRow(self.morfolojiStackedWidget)
         self.morfolojiTab.setLayout(form)
         
         
     def ekrandaGoster(self,gosterilecekResim):
-        width = gosterilecekResim.shape[0]
-        height = gosterilecekResim.shape[1]
+        width = gosterilecekResim.shape[1]
+        height = gosterilecekResim.shape[0]
         
         qImg=None
         
@@ -289,7 +298,7 @@ class MerkeziWidget(QWidget):
             qImg=qimage2ndarray.gray2qimage(gosterilecekResim)
         
         pixmap = QPixmap(qImg)
-        pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
+        pix = pixmap.scaled(380, 600, Qt.KeepAspectRatio)
         self.etiket.setPixmap(pix)
         
         cozString = str("Çözünürlük: {}x{}".format(width,height))
@@ -708,7 +717,32 @@ class MerkeziWidget(QWidget):
         
         
     def morfolojikIslemUygula(self):
-        pass
+        index = self.morfolojikIslemComboBox.currentIndex()
+        self.morfolojiStackedWidget.setCurrentIndex(index)
+    
+    
+    def erosionUygula(self):
+        resim = self.acikResim
+        
+        squareWidthDegeri = int(self.erosionSquareWidthLineEdit.text())
+        
+        erosionUygulanmis = morphology.erosion(resim, morphology.square(squareWidthDegeri))
+        
+        self.islenmisResmiAyarla(erosionUygulanmis)
+        
+        self.ekrandaGoster(erosionUygulanmis)
+    
+    def erosionUI(self):
+        self.erosionSquareWidthLineEdit = QLineEdit()
+        self.erosionSquareWidthLineEdit.setText("10")
+        
+        self.erosionUygulaButon = QPushButton("Uygula")
+        self.erosionUygulaButon.clicked.connect(self.erosionUygula)
+        
+        form = QFormLayout()
+        form.addRow("Square Width :", self.erosionSquareWidthLineEdit)
+        form.addRow(self.erosionUygulaButon)
+        self.erosionWidget.setLayout(form)
         
     
 if __name__ == "__main__":
