@@ -254,16 +254,19 @@ class MerkeziWidget(QWidget):
     
     def morfolojiUI(self):
         self.morfolojikIslemComboBox = QComboBox()
-        self.morfolojikIslemComboBox.addItems(["Erosion"])
+        self.morfolojikIslemComboBox.addItems(["Erosion","Dilation"])
         self.morfolojikIslemComboBox.currentIndexChanged.connect(self.morfolojikIslemUygula)
         
         self.morfolojiStackedWidget = QStackedWidget()
         
         self.erosionWidget = QWidget()
+        self.dilationWidget = QWidget()
         
         self.erosionUI()
+        self.dilationUI()
         
         self.morfolojiStackedWidget.addWidget(self.erosionWidget)
+        self.morfolojiStackedWidget.addWidget(self.dilationWidget)
         
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
@@ -293,8 +296,10 @@ class MerkeziWidget(QWidget):
         elif len(gosterilecekResim.shape) == 2:
             if np.min(gosterilecekResim) < 0:
                 gosterilecekResim = (gosterilecekResim - np.min(gosterilecekResim))/np.ptp(gosterilecekResim)
-
-            gosterilecekResim = img_as_ubyte(gosterilecekResim)
+            
+            if np.max(gosterilecekResim) <= 1:
+                gosterilecekResim = img_as_ubyte(gosterilecekResim)
+                
             qImg=qimage2ndarray.gray2qimage(gosterilecekResim)
         
         pixmap = QPixmap(qImg)
@@ -743,6 +748,31 @@ class MerkeziWidget(QWidget):
         form.addRow("Square Width :", self.erosionSquareWidthLineEdit)
         form.addRow(self.erosionUygulaButon)
         self.erosionWidget.setLayout(form)
+        
+        
+    def dilationUygula(self):
+        resim = self.acikResim
+        
+        squareWidthDegeri = int(self.dilationSquareWidthLineEdit.text())
+        
+        dilationUygulanmis = morphology.dilation(resim, morphology.square(squareWidthDegeri))
+        
+        self.islenmisResmiAyarla(dilationUygulanmis)
+        
+        self.ekrandaGoster(dilationUygulanmis)
+    
+    
+    def dilationUI(self):
+        self.dilationSquareWidthLineEdit = QLineEdit()
+        self.dilationSquareWidthLineEdit.setText("5")
+        
+        self.dilationUygulaButon = QPushButton("Uygula")
+        self.dilationUygulaButon.clicked.connect(self.dilationUygula)
+        
+        form = QFormLayout()
+        form.addRow("Square Width :", self.dilationSquareWidthLineEdit)
+        form.addRow(self.dilationUygulaButon)
+        self.dilationWidget.setLayout(form)
         
     
 if __name__ == "__main__":
