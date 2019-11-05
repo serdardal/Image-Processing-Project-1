@@ -286,21 +286,20 @@ class MerkeziWidget(QWidget):
         qImg=None
         
         if len(gosterilecekResim.shape) == 3:
-
-            if not gosterilecekResim.dtype == 'uint8':
-                gosterilecekResim = img_as_ubyte(gosterilecekResim)
                 
-            qImg=qimage2ndarray.array2qimage(gosterilecekResim)
+            qImg=qimage2ndarray.array2qimage(gosterilecekResim, normalize=True)
             
             
         elif len(gosterilecekResim.shape) == 2:
-            if np.min(gosterilecekResim) < 0:
-                gosterilecekResim = (gosterilecekResim - np.min(gosterilecekResim))/np.ptp(gosterilecekResim)
             
-            if np.max(gosterilecekResim) <= 1:
-                gosterilecekResim = img_as_ubyte(gosterilecekResim)
+            if np.min(gosterilecekResim) >= 0 and np.max(gosterilecekResim) <=1 :
                 
-            qImg=qimage2ndarray.gray2qimage(gosterilecekResim)
+                qImg=qimage2ndarray.gray2qimage(gosterilecekResim, normalize=(0,1))
+                
+            else:
+                
+                qImg=qimage2ndarray.gray2qimage(gosterilecekResim, normalize=True)
+                
         
         pixmap = QPixmap(qImg)
         pix = pixmap.scaled(380, 600, Qt.KeepAspectRatio)
@@ -329,7 +328,7 @@ class MerkeziWidget(QWidget):
             filtrelenmis = filters.hessian(gri)
             
         elif index == 2:
-            filtrelenmis = feature.canny(gri)
+            filtrelenmis = feature.canny(gri).astype(int)
             
         elif index == 3:
             filtrelenmis = filters.prewitt(gri)
@@ -729,6 +728,9 @@ class MerkeziWidget(QWidget):
     def erosionUygula(self):
         resim = self.acikResim
         
+        if len(resim.shape) == 3:
+            resim = rgb2gray(resim)
+        
         squareWidthDegeri = int(self.erosionSquareWidthLineEdit.text())
         
         erosionUygulanmis = morphology.erosion(resim, morphology.square(squareWidthDegeri))
@@ -752,6 +754,9 @@ class MerkeziWidget(QWidget):
         
     def dilationUygula(self):
         resim = self.acikResim
+        
+        if len(resim.shape) == 3:
+            resim = rgb2gray(resim)
         
         squareWidthDegeri = int(self.dilationSquareWidthLineEdit.text())
         
