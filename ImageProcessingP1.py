@@ -149,7 +149,7 @@ class MerkeziWidget(QWidget):
             
     def filtreUI(self):
         self.secim = QComboBox()
-        self.secim.addItems(["Sobel","Hessian","Canny","Prewitt","Laplace","Sato","Unsharp mask","Threshold Niblack","Meijering","Threshold Sauvola"])
+        self.secim.addItems(["Sobel","Hessian","Canny","Prewitt","Laplace","Sato","Unsharp mask","Threshold Niblack","Meijering","Threshold Sauvola","Invert","Threshold Otsu"])
         
         uygulaButon = QPushButton("Uygula")
         uygulaButon.resize(80,30)
@@ -254,19 +254,22 @@ class MerkeziWidget(QWidget):
     
     def morfolojiUI(self):
         self.morfolojikIslemComboBox = QComboBox()
-        self.morfolojikIslemComboBox.addItems(["Erosion","Dilation"])
+        self.morfolojikIslemComboBox.addItems(["Erosion","Dilation","Opening"])
         self.morfolojikIslemComboBox.currentIndexChanged.connect(self.morfolojikIslemUygula)
         
         self.morfolojiStackedWidget = QStackedWidget()
         
         self.erosionWidget = QWidget()
         self.dilationWidget = QWidget()
+        self.openingWidget = QWidget()
         
         self.erosionUI()
         self.dilationUI()
+        self.openingUI()
         
         self.morfolojiStackedWidget.addWidget(self.erosionWidget)
         self.morfolojiStackedWidget.addWidget(self.dilationWidget)
+        self.morfolojiStackedWidget.addWidget(self.openingWidget)
         
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
@@ -350,6 +353,13 @@ class MerkeziWidget(QWidget):
             
         elif index==9:
             filtrelenmis = filters.threshold_sauvola(gri)
+            
+        elif index==10:
+            filtrelenmis = np.invert(gri)
+            
+        elif index == 11:
+            threshold = filters.threshold_otsu(gri)
+            filtrelenmis = gri >= threshold
             
         self.islenmisResmiAyarla(filtrelenmis)
         self.ekrandaGoster(filtrelenmis)
@@ -778,6 +788,33 @@ class MerkeziWidget(QWidget):
         form.addRow("Square Width :", self.dilationSquareWidthLineEdit)
         form.addRow(self.dilationUygulaButon)
         self.dilationWidget.setLayout(form)
+        
+        
+    def openingUygula(self):
+        squareWidth = int(self.openingSquareWidthLineEdit.text())
+        
+        resim = self.acikResim
+        if len(resim.shape) == 3:
+            resim = rgb2gray(resim)
+            
+        openingUygulanmis = morphology.opening(resim, morphology.square(squareWidth))
+        
+        self.islenmisResmiAyarla(openingUygulanmis)
+        
+        self.ekrandaGoster(openingUygulanmis)
+        
+        
+    def openingUI(self):
+        self.openingSquareWidthLineEdit = QLineEdit()
+        self.openingSquareWidthLineEdit.setText("10")
+        
+        openingUygulaButon = QPushButton("Uygula")
+        openingUygulaButon.clicked.connect(self.openingUygula)
+        
+        form = QFormLayout()
+        form.addRow("Square Width: ", self.openingSquareWidthLineEdit)
+        form.addRow(openingUygulaButon)
+        self.openingWidget.setLayout(form)
         
     
 if __name__ == "__main__":
