@@ -10,7 +10,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 from skimage import io, filters, img_as_ubyte, feature, exposure, transform, morphology, util
-from skimage.color import rgb2gray, gray2rgb
+from skimage.color import rgb2gray
 
 import numpy as np
 
@@ -24,28 +24,32 @@ import sys
 
 class Pencere(QMainWindow):
     
+    #ana pencerenin başlangıç ayarlaması yapılması
     def __init__(self):
         super().__init__()
+        
+        self.setUI()
+        
+    #ana pencerenin görsel ayarlanması
+    def setUI(self):
         self.widget = MerkeziWidget()
         self.setCentralWidget(self.widget)
-        self.setUI()
-        self.resize(800,630)
-    
-    
-    def setUI(self):
+        
         self.ActionOlustur()
         self.MenuOlustur()
+        
+        self.resize(800,630)
         
         self.setWindowTitle("Görüntü İşleme")
         self.show()
         
-        
+    #menudeki butonların actionlarının oluşturulması
     def ActionOlustur(self):
         self.resimYukleAction = QAction("Aç", self, triggered=self.widget.dosyaAc)
         self.resimKaydetAction = QAction("Kaydet",self, triggered = self.widget.dosyaKaydet)
         self.islenmisiKullanAction = QAction("İşlenmiş resmi kullan", self, triggered=self.widget.kullanilacakResmiDegistir, checkable=True)
         
-        
+    #menu düzenlenmesi
     def MenuOlustur(self):
         self.dosyaMenu = QMenu("Dosya",self)
         self.dosyaMenu.addAction(self.resimYukleAction)
@@ -57,8 +61,9 @@ class Pencere(QMainWindow):
         self.menuBar().addMenu(self.dosyaMenu)
         self.menuBar().addMenu(self.tercihMenu)
         
-        
+#ana pencere içerisindeki merkezi widget classı
 class MerkeziWidget(QWidget):
+    #merkezi widget başlangıç ayarlaması
     def __init__(self):
         super().__init__()
         self.resimDosyaYolu = None
@@ -69,8 +74,9 @@ class MerkeziWidget(QWidget):
                 
         self.setUI()
         
-        
+    #merkezi widget görsel arayüz ayarlanmsaı
     def setUI(self):
+        #resim bölümünün ayarlanması
         self.etiket = QLabel()
         pixmap = QPixmap()
         pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
@@ -89,6 +95,7 @@ class MerkeziWidget(QWidget):
         resimAlaniLayout.addWidget(self.etiket)
         resimAlani.setLayout(resimAlaniLayout)
         
+        #işlem bölümünün ayarlanması
         islemAlani = QTabWidget(self)
         islemAlani.move(401,0)
         islemAlani.resize(400,600)
@@ -114,7 +121,7 @@ class MerkeziWidget(QWidget):
         self.yogunlukDonusumuUI()
         self.morfolojiUI()
     
-        
+    #resim seçme ve gerekli değişkenlerin ayarlanması
     def dosyaAc(self):
         dosyaYolu = QFileDialog.getOpenFileName(self,"Dosya Seç", "", "Resim Dosyası (*.jpg *.png *jpeg *.xpm)")
         if dosyaYolu[0]:
@@ -125,28 +132,29 @@ class MerkeziWidget(QWidget):
             self.resimDosyaYolu = dosyaYolu[0]
         
         
-            
+    #timestamp ile dosya kaydedilmesi
     def dosyaKaydet(self):
         dosyaYolu = QFileDialog.getSaveFileName(self,"Kayıt Yeri Seç",str(datetime.timestamp(datetime.now())), "*.jpg *.png")
         print(dosyaYolu[0])
         if dosyaYolu[0]:
             io.imsave(dosyaYolu[0],self.islenmis)
             
-    
+    #başlangıçta açılan resim ve işlenmiş resim arasında kullanım tercihinin
+    #ayarlanmasını sağlayan menu butonunun fonksiyonu
     def kullanilacakResmiDegistir(self):
         self.islenmisiKullan = not self.islenmisiKullan
         
         if self.islenmisiKullan == False:
             self.acikResim = io.imread(self.resimDosyaYolu)
         
-    
+    #başlangıçta açılan resim ile işlenmiş resim arasında tercihin yapılması
     def islenmisResmiAyarla(self, resim):
         if self.islenmisiKullan == True:
             self.acikResim = resim
             
         self.islenmis = resim
             
-            
+    #filtre sekmesinin görsel ayarlanması       
     def filtreUI(self):
         self.secim = QComboBox()
         self.secim.addItems(["Sobel","Hessian","Canny","Prewitt","Laplace","Sato","Unsharp mask","Threshold Niblack","Meijering","Threshold Sauvola","Invert","Threshold Otsu"])
@@ -160,7 +168,7 @@ class MerkeziWidget(QWidget):
         form.addRow(uygulaButon)
         self.filtreTab.setLayout(form)
         
-        
+    #histogram sekmesinin görsel ayarlanması   
     def histogramUI(self):
         self.histogramEtiket = QLabel()
         self.histogramEtiket.resize(200,200)
@@ -182,7 +190,7 @@ class MerkeziWidget(QWidget):
         form.addRow(esitleButon)
         self.histogramTab.setLayout(form)
         
-        
+    #uzaysal dönüşüm sekmesinin görsel ayarlanması    
     def uzaysalDonusumUI(self):
         self.islemComboBox = QComboBox()
         self.islemComboBox.addItems(["Yeniden Boyutlandırma", "Döndürme", "Girdap", "Yeniden Ölçeklendirme","Kırpma"])
@@ -218,7 +226,7 @@ class MerkeziWidget(QWidget):
         form.addRow(self.uzaysalDonusumStackedWidget)
         self.uzaysalDonusumTab.setLayout(form)
         
-        
+    #yoğunluk dönüşümü sekmesinin görsel ayarlanması    
     def yogunlukDonusumuUI(self):
         self.yogunlukIslemComboBox = QComboBox()
         self.yogunlukIslemComboBox.addItems(["Gamma","Log","Sigmoid","Equalize Adapthist"])
@@ -251,7 +259,7 @@ class MerkeziWidget(QWidget):
         form.addRow(self.yogunlukDonusumuStackedWidget)
         self.yogunlukDonusumuTab.setLayout(form)
         
-    
+    #morfoloji sekmesinin görsel ayarlanması
     def morfolojiUI(self):
         self.morfolojikIslemComboBox = QComboBox()
         self.morfolojikIslemComboBox.addItems(["Erosion","Dilation","Opening","Closing","White Tophat","BlackTophat","Skeletonize","Thin","Remove Small Objects","Medial Axis"])
@@ -287,20 +295,21 @@ class MerkeziWidget(QWidget):
         form.addRow(self.morfolojiStackedWidget)
         self.morfolojiTab.setLayout(form)
         
-        
+    #fonksiyona verilen numpy arrayinin QImage tipine çevirilip ekranda gösterilmesi    
     def ekrandaGoster(self,gosterilecekResim):
         width = gosterilecekResim.shape[1]
         height = gosterilecekResim.shape[0]
         
         qImg=None
         
+        #rgb resimlerin çevirilmesi
         if len(gosterilecekResim.shape) == 3:
                 
             qImg=qimage2ndarray.array2qimage(gosterilecekResim, normalize=True)
             
-            
+        #gri tonlamalı ve siyah beyaz resimlerin çevirilmesi    
         elif len(gosterilecekResim.shape) == 2:
-            
+            #arrayde 0-1 aralığındaki 2d resimler QImage'e çevirilirken 0-1 arasına normalize edilir
             if np.min(gosterilecekResim) >= 0 and np.max(gosterilecekResim) <=1 :
                 
                 qImg=qimage2ndarray.gray2qimage(gosterilecekResim, normalize=(0,1))
@@ -309,7 +318,7 @@ class MerkeziWidget(QWidget):
                 
                 qImg=qimage2ndarray.gray2qimage(gosterilecekResim, normalize=True)
                 
-        
+        #resmin label içerisine yerleştirilmesi ve çözünürlük bilgisinin gösterilmesi
         pixmap = QPixmap(qImg)
         pix = pixmap.scaled(380, 600, Qt.KeepAspectRatio)
         self.etiket.setPixmap(pix)
@@ -320,7 +329,7 @@ class MerkeziWidget(QWidget):
     
 ###############################################################################
 #FİLTRE ALANI        
-    
+    #seçilen filtrenin uygulanıp ekranda gösterilmesini sağlayan fonksiyon
     def filtreUygula(self):
         resim = self.acikResim
         
@@ -330,39 +339,40 @@ class MerkeziWidget(QWidget):
         index = self.secim.currentIndex()
         
         filtrelenmis = None
+        #sobel filtresi
         if index == 0:
             filtrelenmis = filters.sobel(gri)
-                   
+        #hessian filtresi           
         elif index == 1:
             filtrelenmis = filters.hessian(gri)
-            
+        #canny filtresi    
         elif index == 2:
             filtrelenmis = feature.canny(gri).astype(int)
-            
+        #prewitt filtresi    
         elif index == 3:
             filtrelenmis = filters.prewitt(gri)
-            
+        #laplace filtresi    
         elif index == 4:
             filtrelenmis = filters.laplace(gri)
-            
+        #sato filtresi    
         elif index == 5:
             filtrelenmis = filters.sato(gri)
-            
+        #unsharp mask filtresi    
         elif index==6:
             filtrelenmis = filters.unsharp_mask(resim,radius= 2, amount=2)
-            
+        #niblack filtresi    
         elif index==7:
             filtrelenmis = filters.threshold_niblack(gri)
-            
+        #meijering filtresi    
         elif index==8:
             filtrelenmis = filters.meijering(gri)
-            
+        #threshold sauvola filtresi    
         elif index==9:
             filtrelenmis = filters.threshold_sauvola(gri)
-            
+        #invert filtresi 
         elif index==10:
             filtrelenmis = util.invert(gri)
-            
+        #otsu'nun threshold değerine göre siyah beyaz ayırma filtresi    
         elif index == 11:
             threshold = filters.threshold_otsu(gri)
             filtrelenmis = gri >= threshold
@@ -372,7 +382,7 @@ class MerkeziWidget(QWidget):
             
 ###############################################################################
 #HİSTOGRAM ALANI 
-            
+    #resime ait histogramın oluşturulup ilgili sekmede görüntülenmesi        
     def histogramGoruntule(self):
         #resmin np arraya dönüştürülmesi
         resim = self.acikResim
@@ -397,7 +407,7 @@ class MerkeziWidget(QWidget):
         pix = pixmap.scaled(380, 380, Qt.KeepAspectRatio)
         self.histogramEtiket.setPixmap(pix)
         
-        
+    #histogramın eşitlenmesi    
     def histogramEsitle(self):
         #resmin np arraya dönüştürülmesi
         resim = self.acikResim
@@ -410,11 +420,12 @@ class MerkeziWidget(QWidget):
 
 ###############################################################################
 #UZAYSAL DÖNÜŞÜM ALANI
+    #comboboxtan seçilen işlemin ekrana getirilmesi
     def islemSecimiUygula(self):
         index = self.islemComboBox.currentIndex()
         self.uzaysalDonusumStackedWidget.setCurrentIndex(index)
             
-        
+    #yeniden boyutlandırma işleminin uygulanması    
     def yenidenBoyutlandir(self):
         genislik = int(self.genislikSatiri.text())
         yukseklik = int(self.yukseklikSatiri.text())
@@ -426,7 +437,7 @@ class MerkeziWidget(QWidget):
         self.islenmisResmiAyarla(boyutlandirilmis)
         self.ekrandaGoster(boyutlandirilmis)
         
-        
+    #yeniden boyutlandırma görsel arayüzünün ayarlanması   
     def yenidenBoyutlandirUI(self):
         self.genislikSatiri = QLineEdit()
         self.yukseklikSatiri = QLineEdit()
@@ -440,7 +451,7 @@ class MerkeziWidget(QWidget):
         form.addRow(boyutlandirmaButon)
         self.yenidenBoyutlandirmaWidget.setLayout(form)
         
-        
+    #resmi sola döndürme    
     def solaDondur(self):
         aci = int(self.dondurmeAcisi.text())
         
@@ -451,7 +462,7 @@ class MerkeziWidget(QWidget):
         self.islenmisResmiAyarla(dondurulmus)
         self.ekrandaGoster(dondurulmus)
         
-        
+    #resmi sağa döndürme   
     def sagaDondur(self):
         aci = int(self.dondurmeAcisi.text())
         
@@ -462,7 +473,7 @@ class MerkeziWidget(QWidget):
         self.islenmisResmiAyarla(dondurulmus)
         self.ekrandaGoster(dondurulmus)
         
-        
+    #resim döndürme ekranının görsel ayarlanması    
     def dondurmeUI(self):
         self.dondurmeAcisi = QLineEdit()
         self.dondurmeAcisi.setText("0")
@@ -485,7 +496,7 @@ class MerkeziWidget(QWidget):
         form.addRow(dondurmeButonWidget)
         self.dondurmeWidget.setLayout(form)
         
-        
+    #girdap efektinin uygulanması    
     def girdapUygula(self):
         resim = self.acikResim
         
@@ -497,7 +508,7 @@ class MerkeziWidget(QWidget):
         self.islenmisResmiAyarla(girdapUygulanmis)
         self.ekrandaGoster(girdapUygulanmis)
         
-        
+    #girdap görsel arayüzünün ayarlanması    
     def girdapUI(self):
         self.yaricapInput = QLineEdit()
         self.yaricapInput.setText("100")
@@ -515,7 +526,7 @@ class MerkeziWidget(QWidget):
         form.addRow(girdapButon)
         self.girdapWidget.setLayout(form)
         
-    
+    #resime ölçeklendirme uygulanması
     def olceklendir(self):
         resim = self.acikResim
         
@@ -527,7 +538,7 @@ class MerkeziWidget(QWidget):
         self.islenmisResmiAyarla(olceklendirilmis)
         self.ekrandaGoster(olceklendirilmis)
     
-        
+    #ölçeklendirme görsel arayüzünün ayarlanması    
     def yenidenOlceklendirmeUI(self):
         self.olcekEnInput = QLineEdit()
         self.olcekEnInput.setText("1.0")
@@ -544,11 +555,13 @@ class MerkeziWidget(QWidget):
         form.addRow(olceklendirmeButon)
         self.yenidenOlceklendirmeWidget.setLayout(form)
         
-    
+    #resime kırpma uygulanması
     def kirp(self):
         resim = self.acikResim
+        #kırpılacak kısmın sol üst köşe koordinatlarının seçilmesi
         x1 = int(self.x1Input.text())
         y1 = int(self.y1Input.text())
+        #kırpılacak resmin sağ alt köşe koordinatlarının seçilmesi
         x2 = int(self.x2Input.text())
         y2 = int(self.y2Input.text())
         
@@ -557,7 +570,7 @@ class MerkeziWidget(QWidget):
         self.islenmisResmiAyarla(kirpilmis)
         self.ekrandaGoster(kirpilmis)
         
-        
+    #kirpma görsel arayüzünün ayarlanması    
     def kirpmaUI(self):
         self.x1Input = QLineEdit()      
         self.y1Input = QLineEdit()
@@ -591,12 +604,12 @@ class MerkeziWidget(QWidget):
         
 ###############################################################################
 #YOĞUNLUK DÖNÜŞÜMÜ ALANI
-        
+    #comboboxtan seçilen işlemin ekrana getirilmesi    
     def yogunlukIslemSecimiUygula(self):
         index = self.yogunlukIslemComboBox.currentIndex()
         self.yogunlukDonusumuStackedWidget.setCurrentIndex(index)
         
-    
+    #gamma uygulanması
     def gammaUygula(self):
         resim = self.acikResim
         
@@ -609,7 +622,7 @@ class MerkeziWidget(QWidget):
         
         self.ekrandaGoster(gammaUygulanmis)
         
-    
+    #gamma görsel arayüzünün ayarlanması
     def gammaUI(self):
         self.gammaLineEdit = QLineEdit()
         self.gammaLineEdit.setText("1.0")
@@ -626,7 +639,7 @@ class MerkeziWidget(QWidget):
         form.addRow(gammaButon)
         self.gammaWidget.setLayout(form)
         
-        
+    #log uygulanması    
     def logUygula(self):
         resim = self.acikResim
         
@@ -642,7 +655,7 @@ class MerkeziWidget(QWidget):
         
         self.ekrandaGoster(logUygulanmis)
         
-        
+    #log görsel arayüzünün ayarlanması    
     def logUI(self):
         self.logGainLineEdit = QLineEdit()
         self.logGainLineEdit.setText("1.0")
@@ -658,7 +671,7 @@ class MerkeziWidget(QWidget):
         form.addRow(logButon)
         self.logWidget.setLayout(form)
         
-        
+    #sigmoid uygulanması    
     def sigmoidUygula(self):
         resim = self.acikResim
         
@@ -675,7 +688,7 @@ class MerkeziWidget(QWidget):
         
         self.ekrandaGoster(sigmoidUygulanmis)
         
-        
+    #sigmoid görsel arayüzünün ayarlanması    
     def sigmoidUI(self):
         self.sigmoidCutoffLineEdit = QLineEdit()
         self.sigmoidCutoffLineEdit.setText("0.5")
@@ -695,7 +708,7 @@ class MerkeziWidget(QWidget):
         form.addRow(sigmoidButon)
         self.sigmoidWidget.setLayout(form)
         
-        
+    #equalize adapthist uygulanması    
     def equalizeAdapthistUygula(self):
         resim = self.acikResim
         
@@ -711,7 +724,7 @@ class MerkeziWidget(QWidget):
         
         self.ekrandaGoster(equalizeAdapthistUygulanmis)
         
-    
+    #equalize adapthist görsel arayüzünün ayarlanması
     def equalizeAdapthistUI(self):
         self.kernelSizeLineEdit = QLineEdit()
         
@@ -735,16 +748,18 @@ class MerkeziWidget(QWidget):
 ###############################################################################
 #MORFOLOJİK İŞLEM ALANI
         
-        
+    #combobox seçimine göre işlem ekranının getirilmesi    
     def morfolojikIslemUygula(self):
         index = self.morfolojikIslemComboBox.currentIndex()
         
+        #ilk 6 morfolojik işlem aynı parametre aldığı için tek fonksiyonda işleniyor
         if index < 6:
             self.morfolojiStackedWidget.setCurrentIndex(0)
+            
         else:
             self.morfolojiStackedWidget.setCurrentIndex(index - 5)
         
-    
+    #square width parametresi alan morfolojik işlemlerin uygulanması
     def morfolojiSquareWidthIslemUygula(self):
         resim = self.acikResim
         
@@ -757,21 +772,22 @@ class MerkeziWidget(QWidget):
         
         squareWidthDegeri = int(self.morfolojiSquareWidthLineEdit.text())
         
+        #erosion işlemi
         if index == 0:
             morfolojikIslemUygulanmis = morphology.erosion(resim, morphology.square(squareWidthDegeri))
-            
+        #dilation işlemi
         elif index ==1:
             morfolojikIslemUygulanmis = morphology.dilation(resim, morphology.square(squareWidthDegeri))
-            
+        #opening işlemi
         elif index ==2:
             morfolojikIslemUygulanmis = morphology.opening(resim, morphology.square(squareWidthDegeri))
-            
+        #closing işlemi    
         elif index ==3:
             morfolojikIslemUygulanmis = morphology.closing(resim, morphology.square(squareWidthDegeri))
-            
+        #white tophat işlemi
         elif index ==4:
             morfolojikIslemUygulanmis = morphology.white_tophat(resim, morphology.square(squareWidthDegeri))
-            
+        #black tophat işlemi
         elif index ==5:
             morfolojikIslemUygulanmis = morphology.black_tophat(resim, morphology.square(squareWidthDegeri))
             
@@ -779,7 +795,7 @@ class MerkeziWidget(QWidget):
         
         self.ekrandaGoster(morfolojikIslemUygulanmis)
         
-        
+    #square width parametresi alan işlemleri gerçekleştirmeyi sağlayan görsel arayüzün ayarlanması    
     def morfolojiSquareWidthIslemlerUI(self):
         self.morfolojiSquareWidthLineEdit = QLineEdit()
         self.morfolojiSquareWidthLineEdit.setText("10")
@@ -792,7 +808,7 @@ class MerkeziWidget(QWidget):
         form.addRow(morfolojiSquareWidthUygulaButon)
         self.squareWidthIslemlerWidget.setLayout(form)
         
-        
+    #skeletonize morfolojik işleminin uygulanması    
     def skeletonizeUygula(self):
         resim = self.acikResim
         
@@ -805,7 +821,7 @@ class MerkeziWidget(QWidget):
         
         self.ekrandaGoster(skeletonizeUygulanmis)
         
-        
+    #skeletonize görsel arayüzünün ayarlanması
     def skeletonizeUI(self):
         skeletonizeUygulaButon = QPushButton("Uygula")
         skeletonizeUygulaButon.clicked.connect(self.skeletonizeUygula)
@@ -814,7 +830,7 @@ class MerkeziWidget(QWidget):
         form.addRow(skeletonizeUygulaButon)
         self.skeletonizeWidget.setLayout(form)
         
-        
+    #thin işleminin uygulanması
     def thinUygula(self):
         resim = self.acikResim
         
@@ -823,13 +839,13 @@ class MerkeziWidget(QWidget):
             
         iterationDegeri = int(self.thinIterationLineEdit.text())
         
-        thinUygulanmis = morphology.thin(resim, iterationDegeri)
+        thinUygulanmis = morphology.thin(resim, iterationDegeri).astype(int)
         
         self.islenmisResmiAyarla(thinUygulanmis)
         
         self.ekrandaGoster(thinUygulanmis)
         
-        
+    #thin görsel arayünün ayarlanması
     def thinUI(self):
         self.thinIterationLineEdit = QLineEdit()
         self.thinIterationLineEdit.setText("1")
@@ -842,7 +858,7 @@ class MerkeziWidget(QWidget):
         form.addRow(thinUygulaButon)
         self.thinWidget.setLayout(form)
         
-    
+    #remove small objects işleminin uygulanması
     def removeSmallObjectsUygula(self):
         resim = self.acikResim
         
@@ -854,7 +870,7 @@ class MerkeziWidget(QWidget):
         
         self.ekrandaGoster(removeSmallObjectsUygulanmis)
     
-    
+    #remove small objects görsel arayüzünün ayarlanması
     def removeSmallObjectsUI(self):
         self.minSizeLineEdit = QLineEdit()
         self.minSizeLineEdit.setText("64")
@@ -867,7 +883,7 @@ class MerkeziWidget(QWidget):
         form.addRow(removeSmallObjectsUygulaButon)
         self.removeSmallObjectsWidget.setLayout(form)
         
-        
+    #medial axis uygulanması
     def medialAxisUygula(self):
         resim = self.acikResim
         
@@ -877,7 +893,7 @@ class MerkeziWidget(QWidget):
         
         self.ekrandaGoster(medialAxisUygulanmis)
         
-        
+    #medial axis görsel arayüzünün ayarlanması
     def medialAxisUI(self):
         medialAcisUygulaButon = QPushButton("Uygula")
         medialAcisUygulaButon.clicked.connect(self.medialAxisUygula)
@@ -886,7 +902,7 @@ class MerkeziWidget(QWidget):
         form.addRow(medialAcisUygulaButon)
         self.medialAxisWidget.setLayout(form)
         
-    
+#pencerenin oluşturularak programın başlatılması    
 if __name__ == "__main__":
     app = QCoreApplication.instance()
     if app is None:
