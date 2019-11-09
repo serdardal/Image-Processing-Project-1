@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-from skimage import io, filters, img_as_ubyte, feature, exposure, transform, morphology
+from skimage import io, filters, img_as_ubyte, feature, exposure, transform, morphology, util
 from skimage.color import rgb2gray, gray2rgb
 
 import numpy as np
@@ -254,23 +254,29 @@ class MerkeziWidget(QWidget):
     
     def morfolojiUI(self):
         self.morfolojikIslemComboBox = QComboBox()
-        self.morfolojikIslemComboBox.addItems(["Erosion","Dilation","Opening"])
+        self.morfolojikIslemComboBox.addItems(["Erosion","Dilation","Opening","Closing","White Tophat","BlackTophat","Skeletonize","Thin","Remove Small Objects","Medial Axis"])
         self.morfolojikIslemComboBox.currentIndexChanged.connect(self.morfolojikIslemUygula)
         
         self.morfolojiStackedWidget = QStackedWidget()
         
-        self.erosionWidget = QWidget()
-        self.dilationWidget = QWidget()
-        self.openingWidget = QWidget()
+        self.squareWidthIslemlerWidget = QWidget()
+        self.skeletonizeWidget= QWidget()
+        self.thinWidget = QWidget()
+        self.removeSmallObjectsWidget = QWidget()
+        self.medialAxisWidget = QWidget()
         
-        self.erosionUI()
-        self.dilationUI()
-        self.openingUI()
-        
-        self.morfolojiStackedWidget.addWidget(self.erosionWidget)
-        self.morfolojiStackedWidget.addWidget(self.dilationWidget)
-        self.morfolojiStackedWidget.addWidget(self.openingWidget)
-        
+        self.morfolojiSquareWidthIslemlerUI()
+        self.skeletonizeUI()
+        self.thinUI()
+        self.removeSmallObjectsUI()
+        self.medialAxisUI()
+
+        self.morfolojiStackedWidget.addWidget(self.squareWidthIslemlerWidget)
+        self.morfolojiStackedWidget.addWidget(self.skeletonizeWidget)
+        self.morfolojiStackedWidget.addWidget(self.thinWidget)
+        self.morfolojiStackedWidget.addWidget(self.removeSmallObjectsWidget)
+        self.morfolojiStackedWidget.addWidget(self.medialAxisWidget)
+             
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
         line.setFrameShadow(QFrame.Sunken)
@@ -355,7 +361,7 @@ class MerkeziWidget(QWidget):
             filtrelenmis = filters.threshold_sauvola(gri)
             
         elif index==10:
-            filtrelenmis = np.invert(gri)
+            filtrelenmis = util.invert(gri)
             
         elif index == 11:
             threshold = filters.threshold_otsu(gri)
@@ -732,89 +738,153 @@ class MerkeziWidget(QWidget):
         
     def morfolojikIslemUygula(self):
         index = self.morfolojikIslemComboBox.currentIndex()
-        self.morfolojiStackedWidget.setCurrentIndex(index)
+        
+        if index < 6:
+            self.morfolojiStackedWidget.setCurrentIndex(0)
+        else:
+            self.morfolojiStackedWidget.setCurrentIndex(index - 5)
+        
     
-    
-    def erosionUygula(self):
+    def morfolojiSquareWidthIslemUygula(self):
         resim = self.acikResim
         
         if len(resim.shape) == 3:
             resim = rgb2gray(resim)
         
-        squareWidthDegeri = int(self.erosionSquareWidthLineEdit.text())
+        index = self.morfolojikIslemComboBox.currentIndex()
         
-        erosionUygulanmis = morphology.erosion(resim, morphology.square(squareWidthDegeri))
+        morfolojikIslemUygulanmis = None
         
-        self.islenmisResmiAyarla(erosionUygulanmis)
+        squareWidthDegeri = int(self.morfolojiSquareWidthLineEdit.text())
         
-        self.ekrandaGoster(erosionUygulanmis)
-    
-    def erosionUI(self):
-        self.erosionSquareWidthLineEdit = QLineEdit()
-        self.erosionSquareWidthLineEdit.setText("10")
+        if index == 0:
+            morfolojikIslemUygulanmis = morphology.erosion(resim, morphology.square(squareWidthDegeri))
+            
+        elif index ==1:
+            morfolojikIslemUygulanmis = morphology.dilation(resim, morphology.square(squareWidthDegeri))
+            
+        elif index ==2:
+            morfolojikIslemUygulanmis = morphology.opening(resim, morphology.square(squareWidthDegeri))
+            
+        elif index ==3:
+            morfolojikIslemUygulanmis = morphology.closing(resim, morphology.square(squareWidthDegeri))
+            
+        elif index ==4:
+            morfolojikIslemUygulanmis = morphology.white_tophat(resim, morphology.square(squareWidthDegeri))
+            
+        elif index ==5:
+            morfolojikIslemUygulanmis = morphology.black_tophat(resim, morphology.square(squareWidthDegeri))
+            
+        self.islenmisResmiAyarla(morfolojikIslemUygulanmis)
         
-        self.erosionUygulaButon = QPushButton("Uygula")
-        self.erosionUygulaButon.clicked.connect(self.erosionUygula)
-        
-        form = QFormLayout()
-        form.addRow("Square Width :", self.erosionSquareWidthLineEdit)
-        form.addRow(self.erosionUygulaButon)
-        self.erosionWidget.setLayout(form)
+        self.ekrandaGoster(morfolojikIslemUygulanmis)
         
         
-    def dilationUygula(self):
-        resim = self.acikResim
+    def morfolojiSquareWidthIslemlerUI(self):
+        self.morfolojiSquareWidthLineEdit = QLineEdit()
+        self.morfolojiSquareWidthLineEdit.setText("10")
         
-        if len(resim.shape) == 3:
-            resim = rgb2gray(resim)
-        
-        squareWidthDegeri = int(self.dilationSquareWidthLineEdit.text())
-        
-        dilationUygulanmis = morphology.dilation(resim, morphology.square(squareWidthDegeri))
-        
-        self.islenmisResmiAyarla(dilationUygulanmis)
-        
-        self.ekrandaGoster(dilationUygulanmis)
-    
-    
-    def dilationUI(self):
-        self.dilationSquareWidthLineEdit = QLineEdit()
-        self.dilationSquareWidthLineEdit.setText("5")
-        
-        self.dilationUygulaButon = QPushButton("Uygula")
-        self.dilationUygulaButon.clicked.connect(self.dilationUygula)
+        morfolojiSquareWidthUygulaButon = QPushButton("Uygula")
+        morfolojiSquareWidthUygulaButon.clicked.connect(self.morfolojiSquareWidthIslemUygula)
         
         form = QFormLayout()
-        form.addRow("Square Width :", self.dilationSquareWidthLineEdit)
-        form.addRow(self.dilationUygulaButon)
-        self.dilationWidget.setLayout(form)
+        form.addRow("Square Width: ", self.morfolojiSquareWidthLineEdit)
+        form.addRow(morfolojiSquareWidthUygulaButon)
+        self.squareWidthIslemlerWidget.setLayout(form)
         
         
-    def openingUygula(self):
-        squareWidth = int(self.openingSquareWidthLineEdit.text())
-        
+    def skeletonizeUygula(self):
         resim = self.acikResim
+        
         if len(resim.shape) == 3:
             resim = rgb2gray(resim)
             
-        openingUygulanmis = morphology.opening(resim, morphology.square(squareWidth))
+        skeletonizeUygulanmis = morphology.skeletonize(resim).astype(int)
         
-        self.islenmisResmiAyarla(openingUygulanmis)
+        self.islenmisResmiAyarla(skeletonizeUygulanmis)
         
-        self.ekrandaGoster(openingUygulanmis)
+        self.ekrandaGoster(skeletonizeUygulanmis)
         
         
-    def openingUI(self):
-        self.openingSquareWidthLineEdit = QLineEdit()
-        self.openingSquareWidthLineEdit.setText("10")
-        
-        openingUygulaButon = QPushButton("Uygula")
-        openingUygulaButon.clicked.connect(self.openingUygula)
+    def skeletonizeUI(self):
+        skeletonizeUygulaButon = QPushButton("Uygula")
+        skeletonizeUygulaButon.clicked.connect(self.skeletonizeUygula)
         
         form = QFormLayout()
-        form.addRow("Square Width: ", self.openingSquareWidthLineEdit)
-        form.addRow(openingUygulaButon)
-        self.openingWidget.setLayout(form)
+        form.addRow(skeletonizeUygulaButon)
+        self.skeletonizeWidget.setLayout(form)
+        
+        
+    def thinUygula(self):
+        resim = self.acikResim
+        
+        if len(resim.shape) == 3:
+            resim = rgb2gray(resim)
+            
+        iterationDegeri = int(self.thinIterationLineEdit.text())
+        
+        thinUygulanmis = morphology.thin(resim, iterationDegeri)
+        
+        self.islenmisResmiAyarla(thinUygulanmis)
+        
+        self.ekrandaGoster(thinUygulanmis)
+        
+        
+    def thinUI(self):
+        self.thinIterationLineEdit = QLineEdit()
+        self.thinIterationLineEdit.setText("1")
+        
+        thinUygulaButon = QPushButton("Uygula")
+        thinUygulaButon.clicked.connect(self.thinUygula)
+        
+        form = QFormLayout()
+        form.addRow("Iteration: ", self.thinIterationLineEdit)
+        form.addRow(thinUygulaButon)
+        self.thinWidget.setLayout(form)
+        
+    
+    def removeSmallObjectsUygula(self):
+        resim = self.acikResim
+        
+        minSizeDegeri = int(self.minSizeLineEdit.text())
+        
+        removeSmallObjectsUygulanmis = morphology.remove_small_objects(resim, minSizeDegeri)
+        
+        self.islenmisResmiAyarla(removeSmallObjectsUygulanmis)
+        
+        self.ekrandaGoster(removeSmallObjectsUygulanmis)
+    
+    
+    def removeSmallObjectsUI(self):
+        self.minSizeLineEdit = QLineEdit()
+        self.minSizeLineEdit.setText("64")
+        
+        removeSmallObjectsUygulaButon = QPushButton("Uygula")
+        removeSmallObjectsUygulaButon.clicked.connect(self.removeSmallObjectsUygula)
+        
+        form = QFormLayout()
+        form.addRow("Min. Size: ", self.minSizeLineEdit)
+        form.addRow(removeSmallObjectsUygulaButon)
+        self.removeSmallObjectsWidget.setLayout(form)
+        
+        
+    def medialAxisUygula(self):
+        resim = self.acikResim
+        
+        medialAxisUygulanmis = morphology.medial_axis(resim).astype(int)
+        
+        self.islenmisResmiAyarla(medialAxisUygulanmis)
+        
+        self.ekrandaGoster(medialAxisUygulanmis)
+        
+        
+    def medialAxisUI(self):
+        medialAcisUygulaButon = QPushButton("Uygula")
+        medialAcisUygulaButon.clicked.connect(self.medialAxisUygula)
+        
+        form = QFormLayout()
+        form.addRow(medialAcisUygulaButon)
+        self.medialAxisWidget.setLayout(form)
         
     
 if __name__ == "__main__":
