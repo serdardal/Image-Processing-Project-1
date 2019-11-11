@@ -47,19 +47,14 @@ class Pencere(QMainWindow):
     def ActionOlustur(self):
         self.resimYukleAction = QAction("Aç", self, triggered=self.widget.dosyaAc)
         self.resimKaydetAction = QAction("Kaydet",self, triggered = self.widget.dosyaKaydet)
-        self.islenmisiKullanAction = QAction("İşlenmiş resmi kullan", self, triggered=self.widget.kullanilacakResmiDegistir, checkable=True)
         
     #menu düzenlenmesi
     def MenuOlustur(self):
         self.dosyaMenu = QMenu("Dosya",self)
         self.dosyaMenu.addAction(self.resimYukleAction)
         self.dosyaMenu.addAction(self.resimKaydetAction)
-        
-        self.tercihMenu = QMenu("Tercih", self)
-        self.tercihMenu.addAction(self.islenmisiKullanAction)
-        
+         
         self.menuBar().addMenu(self.dosyaMenu)
-        self.menuBar().addMenu(self.tercihMenu)
         
 #ana pencere içerisindeki merkezi widget classı
 class MerkeziWidget(QWidget):
@@ -67,38 +62,53 @@ class MerkeziWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.resimDosyaYolu = None
+        self.orjinalResim = None
         self.acikResim = None
         self.islenmis = None
         
-        self.islenmisiKullan = False
-                
         self.setUI()
         
     #merkezi widget görsel arayüz ayarlanmsaı
     def setUI(self):
         #resim bölümünün ayarlanması
         self.etiket = QLabel()
-        pixmap = QPixmap()
-        pix = pixmap.scaled(400, 600, Qt.KeepAspectRatio)
-        self.etiket.setPixmap(pix)
         
-        self.cozunurluk = QLabel()
-        self.cozunurluk.setText("")
-        self.cozunurluk.setMaximumHeight(10)
+        self.cozunurluk = QLabel("Çözünürlük:")
+        self.cozunurluk.setMaximumHeight(15)
+        
+        orjinaliGosterButon = QPushButton("Orjinali Göster")
+        orjinaliGosterButon.setMinimumWidth(150)
+        orjinaliGosterButon.pressed.connect(self.orjinalResmiGoster)
+        orjinaliGosterButon.released.connect(self.islenmisResmiGoster)
+        
+        degisiklikleriKaydetButon = QPushButton("Değişiklikleri Onayla")
+        degisiklikleriKaydetButon.setMinimumWidth(150)
+        degisiklikleriKaydetButon.clicked.connect(self.degisiklikleriOnayla)
+        
+        butonWidget = QWidget()
+        butonWidget.setMaximumHeight(30)
+        
+        butonLayout = QHBoxLayout()
+        butonLayout.setContentsMargins(0,0,0,0)
+        butonLayout.addWidget(orjinaliGosterButon)
+        butonLayout.addWidget(degisiklikleriKaydetButon)
+        butonLayout.addStretch(1)
+        butonWidget.setLayout(butonLayout)
         
         resimAlani = QWidget(self)
         resimAlani.setMinimumWidth(400)
         resimAlani.setMinimumHeight(600)
         
         resimAlaniLayout = QVBoxLayout()
+        resimAlaniLayout.setContentsMargins(0,0,0,0)
         resimAlaniLayout.addWidget(self.cozunurluk)
+        resimAlaniLayout.addWidget(butonWidget)
         resimAlaniLayout.addWidget(self.etiket)
         resimAlani.setLayout(resimAlaniLayout)
         
         #işlem bölümünün ayarlanması
         islemAlani = QTabWidget(self)
-        islemAlani.move(401,0)
-        islemAlani.resize(400,600)
+        islemAlani.setFixedWidth(400)
         
         
         self.filtreTab = QWidget()
@@ -120,6 +130,12 @@ class MerkeziWidget(QWidget):
         self.uzaysalDonusumUI()
         self.yogunlukDonusumuUI()
         self.morfolojiUI()
+        
+        layout = QHBoxLayout()
+        layout.addWidget(resimAlani)
+        layout.addWidget(islemAlani)
+        self.setLayout(layout)
+        
     
     #resim seçme ve gerekli değişkenlerin ayarlanması
     def dosyaAc(self):
@@ -130,6 +146,8 @@ class MerkeziWidget(QWidget):
            
             self.acikResim = io.imread(dosyaYolu[0])
             self.resimDosyaYolu = dosyaYolu[0]
+            self.orjinalResim = self.acikResim
+            self.islenmis = self.acikResim
         
         
     #timestamp ile dosya kaydedilmesi
@@ -138,21 +156,23 @@ class MerkeziWidget(QWidget):
         print(dosyaYolu[0])
         if dosyaYolu[0]:
             io.imsave(dosyaYolu[0],self.islenmis)
-            
-    #başlangıçta açılan resim ve işlenmiş resim arasında kullanım tercihinin
-    #ayarlanmasını sağlayan menu butonunun fonksiyonu
-    def kullanilacakResmiDegistir(self):
-        self.islenmisiKullan = not self.islenmisiKullan
-        
-        if self.islenmisiKullan == False:
-            self.acikResim = io.imread(self.resimDosyaYolu)
         
     #başlangıçta açılan resim ile işlenmiş resim arasında tercihin yapılması
-    def islenmisResmiAyarla(self, resim):
-        if self.islenmisiKullan == True:
-            self.acikResim = resim
-            
+    def islenmisResmiAyarla(self, resim):          
         self.islenmis = resim
+        
+    
+    def orjinalResmiGoster(self):
+        self.ekrandaGoster(self.orjinalResim)
+        
+    
+    def islenmisResmiGoster(self):
+        self.ekrandaGoster(self.islenmis)
+        
+        
+    def degisiklikleriOnayla(self):
+        self.acikResim = self.islenmis
+    
             
     #filtre sekmesinin görsel ayarlanması       
     def filtreUI(self):
@@ -320,7 +340,7 @@ class MerkeziWidget(QWidget):
                 
         #resmin label içerisine yerleştirilmesi ve çözünürlük bilgisinin gösterilmesi
         pixmap = QPixmap(qImg)
-        pix = pixmap.scaled(380, 600, Qt.KeepAspectRatio)
+        pix = pixmap.scaled(self.etiket.size(), Qt.KeepAspectRatio)
         self.etiket.setPixmap(pix)
         
         cozString = str("Çözünürlük: {}x{}".format(width,height))
@@ -376,6 +396,7 @@ class MerkeziWidget(QWidget):
         elif index == 11:
             threshold = filters.threshold_otsu(gri)
             filtrelenmis = gri >= threshold
+            filtrelenmis = filtrelenmis.astype(int)
             
         self.islenmisResmiAyarla(filtrelenmis)
         self.ekrandaGoster(filtrelenmis)
