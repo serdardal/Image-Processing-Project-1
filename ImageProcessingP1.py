@@ -20,7 +20,11 @@ import matplotlib.pyplot as plt
 
 from datetime import datetime
 
+import cv2
+
 import sys
+
+import os
 
 class Pencere(QMainWindow):
     
@@ -65,6 +69,7 @@ class MerkeziWidget(QWidget):
         self.orjinalResim = None
         self.acikResim = None
         self.islenmis = None
+        self.videoDosyaYolu = None
         
         self.setUI()
         
@@ -116,12 +121,14 @@ class MerkeziWidget(QWidget):
         self.uzaysalDonusumTab = QWidget()
         self.yogunlukDonusumuTab = QWidget()
         self.morfolojiTab = QWidget()
+        self.videoIslemeTab = QWidget()
         
         islemAlani.addTab(self.filtreTab, "Filtre")
         islemAlani.addTab(self.histogramTab, "Histogram")
         islemAlani.addTab(self.uzaysalDonusumTab,"U. Dönüşüm")
         islemAlani.addTab(self.yogunlukDonusumuTab,"Y. Dönüşüm")
         islemAlani.addTab(self.morfolojiTab, "Morfoloji")
+        islemAlani.addTab(self.videoIslemeTab, "Video İşleme")
         islemAlani.setTabPosition(QTabWidget.East)
         
         
@@ -130,6 +137,7 @@ class MerkeziWidget(QWidget):
         self.uzaysalDonusumUI()
         self.yogunlukDonusumuUI()
         self.morfolojiUI()
+        self.videoIslemeUI()
         
         layout = QHBoxLayout()
         layout.addWidget(resimAlani)
@@ -314,6 +322,34 @@ class MerkeziWidget(QWidget):
         form.addRow(line)
         form.addRow(self.morfolojiStackedWidget)
         self.morfolojiTab.setLayout(form)
+        
+    #video işleme sekmesinin görsel ayarlanması    
+    def videoIslemeUI(self):
+        islemIsmiLabel = QLabel("Canny Kenar Belirleme")
+        islemIsmiLabel.setStyleSheet("font:15pt;" "font-weight:bold;")
+        
+        self.videoAdiLabel = QLabel()
+        
+        videoAcButon = QPushButton("Video Seç")
+        videoAcButon.clicked.connect(self.videoSec)
+        
+        izleButon = QPushButton("İzle (Çıkış: 'q')")
+        izleButon.clicked.connect(self.islenmisVideoIzle)
+        
+        videoKaydetButon = QPushButton("Videoyu Kaydet")
+        videoKaydetButon.clicked.connect(self.islenmisVideoKaydet)
+        
+        self.kayitDurumuLabel = QLabel()
+        
+        form = QFormLayout()
+        form.addRow(islemIsmiLabel)
+        form.addRow("Video Adı: ", self.videoAdiLabel)
+        form.addRow(videoAcButon)
+        form.addRow(izleButon)
+        form.addRow(videoKaydetButon)
+        form.addRow(self.kayitDurumuLabel)
+        self.videoIslemeTab.setLayout(form)
+    
         
     #fonksiyona verilen numpy arrayinin QImage tipine çevirilip ekranda gösterilmesi    
     def ekrandaGoster(self,gosterilecekResim):
@@ -922,6 +958,92 @@ class MerkeziWidget(QWidget):
         form = QFormLayout()
         form.addRow(medialAcisUygulaButon)
         self.medialAxisWidget.setLayout(form)
+        
+###############################################################################
+#VİDEO İŞLEME ALANI
+    
+    #video seçme işlemi    
+    def videoSec(self):
+        dosyaYolu = QFileDialog.getOpenFileName(self,"Video Seç", "", "Video Dosyası(*)")
+        if dosyaYolu[0]:
+            bas, son = os.path.split(dosyaYolu[0])
+            self.videoAdiLabel.setText(son)
+            
+            self.videoDosyaYolu = dosyaYolu[0]
+            
+    #bir pencerede kenar belirleme filtresi uygulanmış videonun gösterilmesi
+    def islenmisVideoIzle(self):
+        if self.videoDosyaYolu:
+            
+            cap = cv2.VideoCapture(self.videoDosyaYolu)
+            
+            #her frame tek tek işleniyor
+            while(1):
+                ret, frame = cap.read()
+                
+                #son frame e geldiyse çık
+                if ret == 0:
+                    break
+                #canny filtresinin uygulanması
+                edges = cv2.Canny(frame, 100, 200)
+                
+                #işlenen frame'in ekrana basılması
+                cv2.imshow('Edges', edges)
+            
+                #çıkmak için q tuşuna basınız
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    print("işlem iptal edildi")
+                    break
+
+            cv2.destroyAllWindows()
+            cap.release()
+    
+    
+    def islenmisVideoKaydet(self):
+        #seçilmiş bir video varsa
+        if self.videoDosyaYolu:
+            #kayıt dosya yolu seçilmesi
+            dosyaYolu = QFileDialog.getSaveFileName(self,"Kayıt Yeri Seç",str(datetime.timestamp(datetime.now())), "*.avi")
+            if dosyaYolu[0]:
+                
+                #geri bildirim mesajı gösterilmesi
+                self.kayitDurumuLabel.setStyleSheet("color:orange")
+                self.kayitDurumuLabel.setText("İşleniyor...")
+                
+                cap = cv2.VideoCapture(self.videoDosyaYolu)
+                
+                #video çözünürlüğü
+                frame_width = int(cap.get(3))
+                frame_height = int(cap.get(4))
+                
+                out = cv2.VideoWriter(dosyaYolu[0],cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+                
+                #her frame tek tek işleniyor
+                while(1):
+                    ret, frame = cap.read()
+                    
+                    #son frame e geldiyse çık
+                    if ret == 0:
+                        break
+                    
+                    #canny filtresinin uygulanması
+                    edges = cv2.Canny(frame, 100, 200)
+                    
+                    #canny filtresi binary 2d çıktı veriyor
+                    #bize 3d lazım olduğu için rgb ye çeviriyoruz
+                    backtorgb = cv2.cvtColor(edges,cv2.COLOR_GRAY2RGB)
+                    
+                    #framein yazılması
+                    out.write(backtorgb)
+    
+                cv2.destroyAllWindows()
+                cap.release()
+                out.release()
+                
+                #geri bildirim mesajı gösterilmesi
+                self.kayitDurumuLabel.setStyleSheet("color:green")
+                self.kayitDurumuLabel.setText("Tamamlandı!")
+                
         
 #pencerenin oluşturularak programın başlatılması    
 if __name__ == "__main__":
