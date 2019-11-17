@@ -1,3 +1,7 @@
+# Image Processing with Scikit-Image
+
+Python image processing (and video egde detection) software with PyQt5 UI
+
 # Python Module Requriments
 
 - PyQt5 5.13.1 
