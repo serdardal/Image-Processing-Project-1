@@ -5,6 +5,8 @@ Created on Sat Oct 26 15:22:15 2019
 @author: serdar
 """
 
+#Serdar Dal - 05160000406
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -147,7 +149,7 @@ class MerkeziWidget(QWidget):
     
     #resim seçme ve gerekli değişkenlerin ayarlanması
     def dosyaAc(self):
-        dosyaYolu = QFileDialog.getOpenFileName(self,"Dosya Seç", "", "Resim Dosyası (*.jpg *.png *jpeg *.xpm)")
+        dosyaYolu = QFileDialog.getOpenFileName(self,"Dosya Seç", "", "Resim Dosyası (*.jpg *.png *jpeg *.xpm *tiff)")
         if dosyaYolu[0]:
             resim = io.imread(dosyaYolu[0])
             self.ekrandaGoster(resim)
